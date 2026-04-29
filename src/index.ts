@@ -242,7 +242,7 @@ const server = new McpServer({
 
 server.tool(
   "find_leads",
-  "Run the full Gorilla lead-generation pipeline. Takes an app idea, searches Reddit, YouTube, X, and TikTok for demand signals, and returns scored leads. Takes 30-90 seconds.",
+  "Run the full Gorilla lead-generation pipeline. Takes an app idea, searches Reddit, YouTube, X, and TikTok for demand signals, and returns scored leads. Usually under 2 minutes.",
   {
     idea: z
       .string()
@@ -302,7 +302,7 @@ server.tool(
 
 server.tool(
   "search_source",
-  "Search a single social platform (Reddit, X, YouTube, TikTok) with custom queries. Useful for debugging or targeted searches.",
+  "Search a single social platform (Reddit, X, YouTube, or TikTok) with custom queries. Useful for debugging or targeted searches against a specific channel.",
   {
     source: z
       .enum(["reddit", "x", "twitter", "youtube", "tiktok"])
