@@ -1,6 +1,8 @@
 # Gorilla MCP Server
 
-Model Context Protocol server for [Gorilla](https://gorilla.opusforge.com.br) — find your first 100 users by searching Reddit, YouTube, X, and TikTok for real demand signals.
+Model Context Protocol server for [Gorilla](https://usegorilla.app). Find your first 100 SaaS users by searching Reddit, YouTube, X, and TikTok for real demand signals.
+
+Learn more: [usegorilla.app](https://usegorilla.app) · [Real run examples](https://usegorilla.app/find-users/) · [How Gorilla compares](https://usegorilla.app/alternatives/) · [Blog](https://usegorilla.app/blog/)
 
 ## Setup
 
@@ -17,7 +19,7 @@ GORILLA_API_KEY=grla_... npx @gorilla/mcp
 ### Get your API key
 
 1. Sign in at [gorilla.opusforge.com.br](https://gorilla.opusforge.com.br)
-2. Menu → API Keys → Create
+2. Menu, API Keys, Create
 3. Copy the key (shown once)
 
 ### Configure in Claude Code
@@ -60,14 +62,14 @@ Add to `.cursor/mcp.json`:
 
 ### find_leads
 
-Run the full pipeline — searches all platforms and returns scored leads. Takes 30-90 seconds.
+Run the full pipeline. Searches all platforms and returns scored leads. Takes 30-90 seconds.
 
 ```
 "Find leads for a meal planning app for busy parents"
 ```
 
 **Parameters:**
-- `idea` (required) — Product description
+- `idea` (required): Product description
 
 **Returns:** Scored leads with source, title, URL, relevance score, category, and outreach angle.
 
@@ -82,7 +84,7 @@ Get 5 clarifying questions to improve search quality before running the pipeline
 ```
 
 **Parameters:**
-- `idea` (required) — Product description
+- `idea` (required): Product description
 
 **Returns:** 5 questions with suggested answer options.
 
@@ -93,8 +95,8 @@ Get 5 clarifying questions to improve search quality before running the pipeline
 Synthesize answers into a polished product description for better search results.
 
 **Parameters:**
-- `idea` (required) — Original idea
-- `answers` (required) — Array of `{ question, answer }` from refine_idea
+- `idea` (required): Original idea
+- `answers` (required): Array of `{ question, answer }` from refine_idea
 
 **Returns:** Short title + detailed enhanced description.
 
@@ -105,7 +107,7 @@ Synthesize answers into a polished product description for better search results
 Generate search keywords, pain points, competitors, and adjacent niches.
 
 **Parameters:**
-- `idea` (required) — Product description
+- `idea` (required): Product description
 
 **Returns:** Structured themes for targeted searches.
 
@@ -116,9 +118,9 @@ Generate search keywords, pain points, competitors, and adjacent niches.
 Search a single platform with custom queries.
 
 **Parameters:**
-- `source` (required) — `reddit`, `youtube`, `twitter`, or `tiktok`
-- `queries` (required) — Array of search queries
-- `run_id` (optional) — Attach results to an existing run
+- `source` (required): `reddit`, `youtube`, `twitter`, or `tiktok`
+- `queries` (required): Array of search queries
+- `run_id` (optional): Attach results to an existing run
 
 **Returns:** Leads from the specified platform.
 
@@ -129,7 +131,7 @@ Search a single platform with custom queries.
 Fetch results for a completed run.
 
 **Parameters:**
-- `run_id` (required) — Run ID
+- `run_id` (required): Run ID
 
 ---
 
@@ -169,12 +171,14 @@ Check your plan and remaining runs.
 |----------|----------|-------------|
 | `GORILLA_API_KEY` | Yes | Your API key (starts with `grla_`) |
 
-Backend URL and gateway key are fetched automatically from `https://gorilla.opusforge.com.br/mcp-config.json` on startup — no other configuration required.
+Backend URL and gateway key are fetched automatically from `https://gorilla.opusforge.com.br/mcp-config.json` on startup. No other configuration required.
 
-## Billing
+## Pricing
 
-- Full pipeline (`find_leads`) costs 1 run credit
-- Individual source search (`search_source`) costs 1 credit
-- `refine_idea`, `enhance_idea`, `expand_themes` cost 1 credit each
-- `get_run`, `list_runs`, `billing_status` are free
-- Plans: Weekly ($2.99/week, 5 runs) or Yearly ($129.99/year, 10 runs/week)
+- **Single run:** $0.99. Pay per use, no subscription.
+- **Weekly Pro:** $3.99/week, 5 runs.
+- **Lifetime:** $149.99 once, unlimited runs.
+
+`find_leads`, `search_source`, `refine_idea`, `enhance_idea`, and `expand_themes` each cost 1 run credit. `get_run`, `list_runs`, and `billing_status` are free.
+
+See [usegorilla.app](https://usegorilla.app) for current plans and the full product.
