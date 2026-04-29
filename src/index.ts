@@ -415,9 +415,9 @@ server.tool(
 
 server.tool(
   "get_run",
-  "Fetch results for a specific run by ID.",
+  "Fetch the full result for a completed run by its run_id. Returns the same scored-leads payload as find_leads (status, results array of posts with lead_score / matched_signals / source / url, and metadata.elapsed_ms / metadata.errors), but does NOT spend a credit. Use this to re-analyse an earlier run, hand the run_id to plan_acquisition_funnel, or recover from a dropped session. If the run is still 'running', the response includes whatever leads have arrived so far; poll again after a few seconds for the final state.",
   {
-    run_id: z.string().describe("The run ID to fetch"),
+    run_id: z.string().describe("The run ID returned by find_leads (e.g. 'run_abc123')."),
   },
   async ({ run_id }) => {
     const err = requireKey();
@@ -435,7 +435,7 @@ server.tool(
 
 server.tool(
   "list_runs",
-  "List all previous lead-generation runs.",
+  "List the user's previous lead-generation runs (newest first). Each entry has id, idea (the input that was searched), status ('completed' / 'running' / 'failed' / 'partial'), and created_at (UNIX seconds). Useful for finding a recent run_id to feed into get_run or plan_acquisition_funnel without spending another credit on a fresh find_leads call.",
   {},
   async () => {
     const err = requireKey();
