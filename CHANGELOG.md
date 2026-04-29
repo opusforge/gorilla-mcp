@@ -2,6 +2,22 @@
 
 All notable changes to the Gorilla MCP server are documented here.
 
+## [2.0.0] - 2026-04-29
+
+### Breaking
+- All 9 tools renamed to dot-notation for navigable hierarchy: `find_leads` → `leads.find`, `refine_idea` → `idea.refine`, `expand_themes` → `idea.expand`, `search_source` → `leads.search`, `get_run` → `runs.get`, `list_runs` → `runs.list`, `billing_status` → `account.billing`, `draft_outreach` → `outreach.draft`, `plan_acquisition_funnel` → `outreach.plan`. Update any prompts, skills, or scripts that reference the old names.
+
+### Added
+- MCP tool annotations (`title`, `readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`) on every tool so MCP clients render correct UI hints.
+- `GORILLA_DEFAULT_LANGUAGE` optional env (`en`, `pt`, `all`) — fallback for `idea.refine` and `outreach.draft`.
+- `GORILLA_CONFIG_URL` optional env — override the runtime config endpoint for staging or self-hosted Supabase.
+- `manifest.json`, `.mcpbignore`, and `scripts/build-mcpb.sh` for reproducible Smithery MCPB bundle builds.
+- Smithery badge in README. Server published at [smithery.ai/server/opusforge/gorilla-mcp](https://smithery.ai/server/opusforge/gorilla-mcp).
+
+### Changed
+- Smithery `user_config.api_key` is now `required: false` so clients can install the server and browse tools without entering a key. Tool calls still require it (the server returns a clear error if missing).
+- Dockerfile pinned to `node:22-alpine` (was `node:25-alpine`) so the Glama / container build matches `engines.node`.
+
 ## [1.0.5] - 2026-04-29
 
 ### Added

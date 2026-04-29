@@ -1,6 +1,6 @@
 # Multi-stage build for the Gorilla MCP server.
 # Stage 1: install + compile.
-FROM node:25-alpine AS build
+FROM node:22-alpine AS build
 WORKDIR /app
 COPY package.json tsconfig.json ./
 COPY src ./src
@@ -8,7 +8,7 @@ RUN npm install --omit=dev=false --no-audit --no-fund \
  && npm run build
 
 # Stage 2: minimal runtime. Only ship dist + production deps.
-FROM node:25-alpine
+FROM node:22-alpine
 WORKDIR /app
 COPY package.json ./
 RUN npm install --omit=dev --no-audit --no-fund

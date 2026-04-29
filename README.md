@@ -3,6 +3,7 @@
 [![CI](https://github.com/opusforge/gorilla-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/opusforge/gorilla-mcp/actions/workflows/ci.yml)
 [![Version](https://img.shields.io/github/v/release/opusforge/gorilla-mcp)](https://github.com/opusforge/gorilla-mcp/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![smithery badge](https://smithery.ai/badge/opusforge/gorilla-mcp)](https://smithery.ai/servers/opusforge/gorilla-mcp)
 [![gorilla-mcp MCP server](https://glama.ai/mcp/servers/opusforge/gorilla-mcp/badges/score.svg)](https://glama.ai/mcp/servers/opusforge/gorilla-mcp)
 
 [![Stars](https://img.shields.io/github/stars/opusforge/gorilla-mcp?style=flat&logo=github)](https://github.com/opusforge/gorilla-mcp/stargazers)
@@ -83,109 +84,103 @@ Add to `.cursor/mcp.json`:
 
 ## Tools
 
-### find_leads
+Tools are namespaced by domain (`leads.*`, `idea.*`, `runs.*`, `outreach.*`, `account.*`).
 
-Run the full pipeline. Searches all platforms and returns scored leads. Takes 30-90 seconds.
+### `leads.find`
 
-```
-"Find leads for a meal planning app for busy parents"
-```
+Run the full pipeline. Searches Reddit, X, YouTube, and TikTok and returns scored leads. Takes 60-120 seconds. Costs 1 run credit.
 
-**Parameters:**
-- `idea` (required): Product description
+**Parameters:** `idea` (required) — product description
 
-**Returns:** Scored leads with source, title, URL, relevance score, category, and outreach angle.
+**Returns:** Scored leads with source, channel, title, URL, lead_score (0-1), and outreach hints.
 
 ---
 
-### refine_idea
+### `idea.refine`
 
-Get 5 clarifying questions to improve search quality before running the pipeline.
+Conversational refinement. Returns one clarifying question at a time to sharpen the idea before searching. Free.
 
-```
-"Help me refine my idea for a pet sitting marketplace"
-```
+**Parameters:** `idea` (required), plus `current_refined_idea`, `history`, `language`, `turn`, `max_turns` (all optional)
 
-**Parameters:**
-- `idea` (required): Product description
-
-**Returns:** 5 questions with suggested answer options.
+**Returns:** Status, refined_idea, readiness_score, and the next question (or null when ready).
 
 ---
 
-### enhance_idea
+### `idea.expand`
 
-Synthesize answers into a polished product description for better search results.
+Generate keyword scaffolding (core keywords, adjacent niches, pain points, competitor names, exclusion terms) without running searches. Costs 1 run credit.
 
-**Parameters:**
-- `idea` (required): Original idea
-- `answers` (required): Array of `{ question, answer }` from refine_idea
-
-**Returns:** Short title + detailed enhanced description.
-
----
-
-### expand_themes
-
-Generate search keywords, pain points, competitors, and adjacent niches.
-
-**Parameters:**
-- `idea` (required): Product description
+**Parameters:** `idea` (required)
 
 **Returns:** Structured themes for targeted searches.
 
 ---
 
-### search_source
+### `leads.search`
 
-Search a single platform with custom queries.
+Search a single platform with custom queries. Bypasses theme expansion and AI scoring. Costs 1 run credit.
 
 **Parameters:**
-- `source` (required): `reddit`, `youtube`, `twitter`, or `tiktok`
+- `source` (required): `reddit`, `x`, `youtube`, or `tiktok`
 - `queries` (required): Array of search queries
 - `run_id` (optional): Attach results to an existing run
 
-**Returns:** Leads from the specified platform.
+**Returns:** Raw leads from the specified platform.
 
 ---
 
-### get_run
+### `runs.get`
 
-Fetch results for a completed run.
+Fetch results for a previously-started run. Free.
 
-**Parameters:**
-- `run_id` (required): Run ID
-
----
-
-### list_runs
-
-List all previous runs.
+**Parameters:** `run_id` (required)
 
 ---
 
-### billing_status
+### `runs.list`
 
-Check your plan and remaining runs.
+List your last 50 runs, newest first. Free.
+
+---
+
+### `account.billing`
+
+Check your plan, remaining weekly runs, and referral credits. Free.
 
 **Returns:** Plan name, weekly usage, referral credits, total available runs.
+
+---
+
+### `outreach.draft`
+
+Generate a platform-tuned outreach message for a specific lead. Costs 1 run credit per draft.
+
+**Parameters:** `idea`, `source`, `outreach_action`, `post_title`, `post_body` (required), plus optional `post_handle`, `language`, `reply_to_author`, `reply_to_text`.
+
+**Returns:** A ready-to-paste draft.
+
+---
+
+### `outreach.plan`
+
+Build a Week-1 outreach plan from a completed run's HIGH-intent leads, with per-channel send cadence. Free.
+
+**Parameters:** `run_id` (required)
 
 ## Example workflow
 
 ```
-1. refine_idea("a language learning app for travelers")
-   → 5 questions about target audience, competitors, etc.
+1. idea.refine("a language learning app for travelers")
+   → "Who's the target user? Daily commuters or tourists?"
 
-2. enhance_idea(idea, answers)
-   → "TravelLingo: A mobile app for travelers to learn essential
-      phrases in any language through AI-powered conversations..."
-
-3. find_leads(enhanced_idea)
+2. leads.find(refined_idea)
    → 47 leads across Reddit, YouTube, X, and TikTok
    → 12 high-intent (people actively searching for this)
 
-4. billing_status()
-   → Weekly 3/5, 2 referral credits, 4 runs available
+3. outreach.plan(run_id)
+   → Week-1 plan: 3/day on Reddit, 4/day on X, 2/day on YT/TT
+
+4. outreach.draft(...)  → ready-to-send reply for each high-intent lead
 ```
 
 ### Install via Smithery
@@ -197,7 +192,7 @@ Available at [smithery.ai/server/opusforge/gorilla-mcp](https://smithery.ai/serv
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `GORILLA_API_KEY` | Yes | Your API key (starts with `grla_`) |
-| `GORILLA_DEFAULT_LANGUAGE` | No | Fallback language for `refine_idea` and `draft_outreach` (`en`, `pt`, `all`). Default: `en`. |
+| `GORILLA_DEFAULT_LANGUAGE` | No | Fallback language for `idea.refine` and `outreach.draft` (`en`, `pt`, `all`). Default: `en`. |
 | `GORILLA_CONFIG_URL` | No | Override the runtime config endpoint. Useful for staging or self-hosted deployments. |
 
 Backend URL and gateway key are fetched automatically from `https://gorilla.opusforge.com.br/mcp-config.json` on startup. No other configuration required.
@@ -208,6 +203,6 @@ Backend URL and gateway key are fetched automatically from `https://gorilla.opus
 - **Weekly Pro:** $3.99/week, 5 runs.
 - **Lifetime:** $149.99 once, unlimited runs.
 
-`find_leads`, `search_source`, `refine_idea`, `enhance_idea`, and `expand_themes` each cost 1 run credit. `get_run`, `list_runs`, and `billing_status` are free.
+`leads.find`, `leads.search`, `idea.expand`, and `outreach.draft` each cost 1 run credit. `idea.refine`, `runs.get`, `runs.list`, `account.billing`, and `outreach.plan` are free.
 
 See [usegorilla.app](https://usegorilla.app) for current plans and the full product.

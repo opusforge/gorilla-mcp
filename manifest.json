@@ -2,9 +2,9 @@
   "manifest_version": "0.3",
   "name": "gorilla-mcp",
   "display_name": "Gorilla",
-  "version": "1.1.3",
+  "version": "2.0.0",
   "description": "Find your first 100 SaaS users by searching Reddit, X, YouTube, and TikTok for real demand signals.",
-  "long_description": "Model Context Protocol server for [Gorilla](https://usegorilla.app). Paste an app idea and Gorilla returns scored leads from real posts across Reddit, YouTube, X, and TikTok where people are actively expressing demand.\n\n## Tools\n\n- **find_leads** — full pipeline, returns scored leads in 60-120s\n- **refine_idea** — conversational refinement before searching\n- **expand_themes** — generate keywords, pain points, competitors\n- **search_source** — search a single platform with custom queries\n- **get_run** / **list_runs** — fetch results, list past runs\n- **billing_status** — check plan and remaining runs\n- **draft_outreach** — platform-tuned reply for a specific lead\n- **plan_acquisition_funnel** — Week-1 outreach plan from HIGH-intent leads\n\n## Pricing\n\n- $0.99 single run\n- $3.99/week Pro (5 runs)\n- $149.99 lifetime (unlimited)\n\nGet your API key at [usegorilla.app](https://usegorilla.app).",
+  "long_description": "Model Context Protocol server for [Gorilla](https://usegorilla.app). Paste an app idea and Gorilla returns scored leads from real posts across Reddit, YouTube, X, and TikTok where people are actively expressing demand.\n\n## Tools\n\n- `leads.find` — full pipeline, returns scored leads in 60-120s\n- `idea.refine` — conversational refinement before searching\n- `idea.expand` — generate keywords, pain points, competitors\n- `leads.search` — search a single platform with custom queries\n- `runs.get` / `runs.list` — fetch results, list past runs\n- `account.billing` — check plan and remaining runs\n- `outreach.draft` — platform-tuned reply for a specific lead\n- `outreach.plan` — Week-1 outreach plan from HIGH-intent leads\n\n## Pricing\n\n- $0.99 single run\n- $3.99/week Pro (5 runs)\n- $149.99 lifetime (unlimited)\n\nGet your API key at [usegorilla.app](https://usegorilla.app).",
   "author": {
     "name": "OpusForge",
     "email": "gorilla@opusforge.com.br",
@@ -43,7 +43,7 @@
   },
   "tools": [
     {
-      "name": "find_leads",
+      "name": "leads.find",
       "description": "Run the full pipeline. Searches Reddit, X, YouTube, and TikTok for posts where people express demand for the given idea. Takes 60-120 seconds. Costs 1 run credit.",
       "annotations": { "title": "Find leads", "readOnlyHint": false, "destructiveHint": false, "idempotentHint": false, "openWorldHint": true },
       "inputSchema": {
@@ -55,14 +55,14 @@
       }
     },
     {
-      "name": "refine_idea",
+      "name": "idea.refine",
       "description": "Conversational refinement. Returns one clarifying question at a time to sharpen the product description before searching. Free.",
       "annotations": { "title": "Refine idea", "readOnlyHint": true, "destructiveHint": false, "idempotentHint": false, "openWorldHint": true },
       "inputSchema": {
         "type": "object",
         "properties": {
           "idea": { "type": "string", "description": "The original raw idea text. Stays the same across turns." },
-          "current_refined_idea": { "type": "string", "description": "The latest refined_idea returned by a previous refine_idea call." },
+          "current_refined_idea": { "type": "string", "description": "The latest refined_idea returned by a previous idea.refine call." },
           "history": {
             "type": "array",
             "description": "Prior turns: each entry is the question the server asked and the user's answer.",
@@ -83,7 +83,7 @@
       }
     },
     {
-      "name": "expand_themes",
+      "name": "idea.expand",
       "description": "Generate keyword scaffolding for an idea (core keywords, adjacent niches, pain points, competitor names, exclusion terms). Costs 1 run credit.",
       "annotations": { "title": "Expand themes", "readOnlyHint": true, "destructiveHint": false, "idempotentHint": false, "openWorldHint": true },
       "inputSchema": {
@@ -95,7 +95,7 @@
       }
     },
     {
-      "name": "search_source",
+      "name": "leads.search",
       "description": "Search a single platform (reddit, x, youtube, or tiktok) with custom queries. Bypasses theme expansion and AI scoring. Costs 1 run credit.",
       "annotations": { "title": "Search a single source", "readOnlyHint": false, "destructiveHint": false, "idempotentHint": false, "openWorldHint": true },
       "inputSchema": {
@@ -109,31 +109,31 @@
       }
     },
     {
-      "name": "get_run",
+      "name": "runs.get",
       "description": "Fetch the full result for a previously-started run by its run_id. Free.",
       "annotations": { "title": "Get run", "readOnlyHint": true, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false },
       "inputSchema": {
         "type": "object",
         "properties": {
-          "run_id": { "type": "string", "description": "The run ID returned by find_leads (e.g. 'run_abc123')." }
+          "run_id": { "type": "string", "description": "The run ID returned by leads.find (e.g. 'run_abc123')." }
         },
         "required": ["run_id"]
       }
     },
     {
-      "name": "list_runs",
+      "name": "runs.list",
       "description": "List the user's recent lead-generation runs, newest first, capped at 50. Free.",
       "annotations": { "title": "List runs", "readOnlyHint": true, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false },
       "inputSchema": { "type": "object", "properties": {} }
     },
     {
-      "name": "billing_status",
+      "name": "account.billing",
       "description": "Check the user's plan, remaining weekly runs, and referral credits. Free.",
       "annotations": { "title": "Billing status", "readOnlyHint": true, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false },
       "inputSchema": { "type": "object", "properties": {} }
     },
     {
-      "name": "draft_outreach",
+      "name": "outreach.draft",
       "description": "Generate a platform-tuned outreach message for a specific lead. Costs 1 run credit per draft.",
       "annotations": { "title": "Draft outreach", "readOnlyHint": true, "destructiveHint": false, "idempotentHint": false, "openWorldHint": true },
       "inputSchema": {
@@ -153,13 +153,13 @@
       }
     },
     {
-      "name": "plan_acquisition_funnel",
+      "name": "outreach.plan",
       "description": "Build a Week-1 outreach plan from a completed run's HIGH-intent leads, with per-channel send cadence and per-category action register. Free.",
       "annotations": { "title": "Plan acquisition funnel", "readOnlyHint": true, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false },
       "inputSchema": {
         "type": "object",
         "properties": {
-          "run_id": { "type": "string", "description": "The run_id returned by find_leads" }
+          "run_id": { "type": "string", "description": "The run_id returned by leads.find" }
         },
         "required": ["run_id"]
       }
@@ -175,14 +175,14 @@
     "api_key": {
       "type": "string",
       "title": "Gorilla API Key",
-      "description": "Your API key from gorilla.opusforge.com.br (Menu → API Keys → Create). Starts with grla_.",
+      "description": "Your API key from gorilla.opusforge.com.br (Menu → API Keys → Create). Starts with grla_. The server starts without it so you can browse tools, but every tool call requires a key.",
       "sensitive": true,
-      "required": true
+      "required": false
     },
     "default_language": {
       "type": "string",
       "title": "Default language",
-      "description": "Fallback language for refine_idea and draft_outreach when the caller doesn't specify one. Accepts en, pt, or all.",
+      "description": "Fallback language for idea.refine and outreach.draft when the caller doesn't specify one. Accepts en, pt, or all.",
       "default": "en",
       "required": false
     },
