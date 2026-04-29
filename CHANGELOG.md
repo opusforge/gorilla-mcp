@@ -41,4 +41,4 @@ All notable changes to the Gorilla MCP server are documented here.
 
 ## [1.0.0] - 2026-04-29
 
-Initial public release with 10 tools: `find_leads`, `refine_idea`, `enhance_idea`, `expand_themes`, `search_source`, `get_run`, `list_runs`, `billing_status`, `draft_outreach`, `plan_acquisition_funnel`.
+Initial public release with 9 tools: `find_leads`, `refine_idea`, `expand_themes`, `search_source`, `get_run`, `list_runs`, `billing_status`, `draft_outreach`, `plan_acquisition_funnel`.

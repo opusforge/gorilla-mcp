@@ -281,34 +281,85 @@ server.tool(
 
 server.tool(
   "refine_idea",
-  "Generate 5 clarifying questions to help refine a product idea before searching. Use this to get better search results.",
+  "Run one round of conversational idea refinement. Returns the refined version of the idea, a readiness score (0-100), one clarifying question to ask the user (or null if ready), and the list of remaining missing info. To continue refining, call again with the original idea, the latest refined_idea, and the appended history of prior {question, answer} pairs. Stops when readiness_score crosses ~75 or after max_turns. Same flow the usegorilla.app /refine page uses.",
   {
-    idea: z.string().describe("The app idea to generate questions for"),
+    idea: z.string().describe("The original raw idea text. Stays the same across turns."),
+    current_refined_idea: z
+      .string()
+      .optional()
+      .describe("The latest refined_idea returned by a previous refine_idea call. Omit on the first turn."),
+    history: z
+      .array(
+        z.object({
+          question: z.string(),
+          answer: z.string(),
+        }),
+      )
+      .optional()
+      .describe("Prior turns: each entry is the question the server asked and the user's answer. Empty / omitted on the first turn."),
+    language: z
+      .enum(["en", "pt", "all"])
+      .optional()
+      .describe("Output language. 'all' (default) auto-detects from the idea text."),
+    turn: z
+      .number()
+      .int()
+      .optional()
+      .describe("1-based turn number. Lets the server stop sooner if needed."),
+    max_turns: z
+      .number()
+      .int()
+      .optional()
+      .describe("Maximum rounds before the server forces status='ready'. Default 5."),
   },
-  async ({ idea }) => {
+  async ({ idea, current_refined_idea, history, language, turn, max_turns }) => {
     const err = requireKey();
     if (err) return err;
 
-    const { questions } = await call<{
-      questions: Array<{ id: string; question: string; options: string[] }>;
-    }>("POST", "refine", { idea });
+    const body: Record<string, unknown> = { idea };
+    if (current_refined_idea) body.current_refined_idea = current_refined_idea;
+    if (history && history.length) body.history = history;
+    if (language) body.language = language;
+    if (typeof turn === "number") body.turn = turn;
+    if (typeof max_turns === "number") body.max_turns = max_turns;
 
-    const formatted = questions
-      .map(
-        (q, i) =>
-          `${i + 1}. ${q.question}\n   Options: ${q.options.join(" | ")}`
-      )
-      .join("\n\n");
+    const r = await call<{
+      status: "ready" | "needs_answer";
+      refined_idea: string;
+      readiness_score: number;
+      readiness_reason: string;
+      missing_info: string[];
+      audience_model: unknown;
+      question: { question: string; options?: string[] } | null;
+    }>("POST", "refine", body);
+
+    const lines: string[] = [];
+    lines.push(`Status: ${r.status} (readiness ${r.readiness_score}/100)`);
+    lines.push("");
+    lines.push(`Refined idea:\n  ${r.refined_idea}`);
+    if (r.missing_info.length) {
+      lines.push("");
+      lines.push(`Still missing: ${r.missing_info.join("; ")}`);
+    }
+    if (r.status === "needs_answer" && r.question) {
+      lines.push("");
+      lines.push(`Next question: ${r.question.question}`);
+      if (r.question.options && r.question.options.length) {
+        lines.push(`Suggested answers: ${r.question.options.join(" | ")}`);
+      }
+      lines.push("");
+      lines.push(
+        "Call refine_idea again with the same `idea`, this question's `refined_idea` as `current_refined_idea`, and a `history` array including {question, answer}.",
+      );
+    } else {
+      lines.push("");
+      lines.push("Idea is ready. Pass `refined_idea` to find_leads.");
+    }
 
     return {
-      content: [
-        {
-          type: "text" as const,
-          text: `Refinement questions for "${idea}":\n\n${formatted}\n\nCombine the answers with the original idea and pass to find_leads.`,
-        },
-      ],
+      content: [{ type: "text" as const, text: lines.join("\n") }],
     };
-  }
+  },
 );
 
 // -- search_source ------------------------------------------------------------
