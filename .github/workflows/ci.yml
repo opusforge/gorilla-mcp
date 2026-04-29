@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20.x, 22.x]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: npm ci || npm install --no-audit --no-fund
+      - run: npm run build
+      - name: Verify MCP introspection
+        run: |
+          (
+            echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"ci","version":"1.0"}}}'
+            sleep 0.5
+            echo '{"jsonrpc":"2.0","method":"notifications/initialized"}'
+            sleep 0.3
+            echo '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}'
+            sleep 0.5
+          ) | timeout 8 node dist/index.js | tee /tmp/mcp.out
+          grep -q '"name":"find_leads"' /tmp/mcp.out
+          grep -q '"name":"draft_outreach"' /tmp/mcp.out
+          grep -q '"name":"plan_acquisition_funnel"' /tmp/mcp.out
