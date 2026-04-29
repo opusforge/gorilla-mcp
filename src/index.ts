@@ -161,7 +161,7 @@ function formatPost(p: Post): string {
   const ch =
     p.source === "reddit"
       ? `r/${p.channel.name}`
-      : p.source === "twitter"
+      : ["twitter", "x", "instagram", "tiktok"].includes(p.source)
         ? `@${p.channel.name}`
         : `${p.source}/${p.channel.name}`;
 
