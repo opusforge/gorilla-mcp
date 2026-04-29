@@ -188,11 +188,17 @@ Check your plan and remaining runs.
    → Weekly 3/5, 2 referral credits, 4 runs available
 ```
 
+### Install via Smithery
+
+Available at [smithery.ai/server/opusforge/gorilla-mcp](https://smithery.ai/server/opusforge/gorilla-mcp). Smithery distributes a pre-built MCPB bundle that any MCPB-compatible client can install in one click.
+
 ## Environment variables
 
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `GORILLA_API_KEY` | Yes | Your API key (starts with `grla_`) |
+| `GORILLA_DEFAULT_LANGUAGE` | No | Fallback language for `refine_idea` and `draft_outreach` (`en`, `pt`, `all`). Default: `en`. |
+| `GORILLA_CONFIG_URL` | No | Override the runtime config endpoint. Useful for staging or self-hosted deployments. |
 
 Backend URL and gateway key are fetched automatically from `https://gorilla.opusforge.com.br/mcp-config.json` on startup. No other configuration required.
 

@@ -24,11 +24,20 @@ if (argv.includes("--version") || argv.includes("-v")) {
 
 const GORILLA_API_KEY = process.env.GORILLA_API_KEY ?? "";
 
+// Optional: default language used as fallback in refine_idea and draft_outreach
+// when the caller doesn't pass `language`. Accepts "en", "pt", or "all".
+const GORILLA_DEFAULT_LANGUAGE = process.env.GORILLA_DEFAULT_LANGUAGE ?? "";
+
 // The MCP only needs the user's GORILLA_API_KEY. Everything else (the
 // Edge Functions base URL and the Supabase anon gateway key) is fetched
 // once from a static JSON served alongside the web app, so nothing else
 // is baked into the shipped package.
-const CONFIG_URL = "https://gorilla.opusforge.com.br/mcp-config.json";
+//
+// Optional: GORILLA_CONFIG_URL lets power users point at a different
+// config endpoint (e.g. staging or self-hosted Supabase project).
+const CONFIG_URL =
+  process.env.GORILLA_CONFIG_URL ??
+  "https://gorilla.opusforge.com.br/mcp-config.json";
 
 interface RuntimeConfig {
   api_base: string;
@@ -248,7 +257,7 @@ function requireKey() {
 
 const server = new McpServer({
   name: "gorilla",
-  version: "1.0.0",
+  version: "1.1.3",
 });
 
 // -- find_leads ---------------------------------------------------------------
@@ -260,6 +269,13 @@ server.tool(
     idea: z
       .string()
       .describe("The app idea or product description to find leads for"),
+  },
+  {
+    title: "Find leads",
+    readOnlyHint: false,
+    destructiveHint: false,
+    idempotentHint: false,
+    openWorldHint: true,
   },
   async ({ idea }) => {
     const err = requireKey();
@@ -312,6 +328,13 @@ server.tool(
       .optional()
       .describe("Maximum rounds before the server forces status='ready'. Default 5."),
   },
+  {
+    title: "Refine idea",
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
   async ({ idea, current_refined_idea, history, language, turn, max_turns }) => {
     const err = requireKey();
     if (err) return err;
@@ -319,7 +342,14 @@ server.tool(
     const body: Record<string, unknown> = { idea };
     if (current_refined_idea) body.current_refined_idea = current_refined_idea;
     if (history && history.length) body.history = history;
-    if (language) body.language = language;
+    const effectiveLanguage =
+      language ??
+      (GORILLA_DEFAULT_LANGUAGE === "en" ||
+      GORILLA_DEFAULT_LANGUAGE === "pt" ||
+      GORILLA_DEFAULT_LANGUAGE === "all"
+        ? GORILLA_DEFAULT_LANGUAGE
+        : undefined);
+    if (effectiveLanguage) body.language = effectiveLanguage;
     if (typeof turn === "number") body.turn = turn;
     if (typeof max_turns === "number") body.max_turns = max_turns;
 
@@ -381,6 +411,13 @@ server.tool(
         "Optional run ID to attach results to an existing run (writes to DB)"
       ),
   },
+  {
+    title: "Search a single source",
+    readOnlyHint: false,
+    destructiveHint: false,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
   async ({ source, queries, run_id }) => {
     const err = requireKey();
     if (err) return err;
@@ -433,6 +470,13 @@ server.tool(
   {
     idea: z.string().describe("The app idea to expand into search themes"),
   },
+  {
+    title: "Expand themes",
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
   async ({ idea }) => {
     const err = requireKey();
     if (err) return err;
@@ -470,6 +514,13 @@ server.tool(
   {
     run_id: z.string().describe("The run ID returned by find_leads (e.g. 'run_abc123')."),
   },
+  {
+    title: "Get run",
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
   async ({ run_id }) => {
     const err = requireKey();
     if (err) return err;
@@ -488,6 +539,13 @@ server.tool(
   "list_runs",
   "List the user's recent lead-generation runs, newest first, capped at 50. Behavior: read-only DB query scoped to the authenticated user. No external calls, no credit consumed. Idempotent. Usage: call this when the user wants to revisit a previous lead hunt, when you need a run_id to feed into get_run / plan_acquisition_funnel without re-running, or to confirm whether a recent find_leads has completed. Do NOT use this to enumerate other users' runs (the endpoint is user-scoped). Returns: { runs: [{ id, idea, status (completed/running/failed/partial), created_at (UNIX seconds), total_posts, product_title }] }, ordered by created_at desc.",
   {},
+  {
+    title: "List runs",
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
   async () => {
     const err = requireKey();
     if (err) return err;
@@ -531,6 +589,13 @@ server.tool(
   "billing_status",
   "Check the authenticated user's current plan, remaining weekly runs, referral credits, and whether any API keys are active. Behavior: read-only; hits the billing-status edge function which derives the live state from the billing + beta_access tables. Free, no credit consumed. Idempotent. Usage: call this BEFORE find_leads or search_source if you want to confirm the user has runs available, or after a billing-error response to surface why the call was blocked. Useful for the agent to decide whether to recommend an upgrade. Do NOT poll this on a schedule, the values only change when Stripe webhooks fire (sub-minute polling adds no signal). Returns: { plan ('free'/'weekly'/'monthly'/'yearly'/'lifetime'), runs_this_week, weekly_limit, referral_credits, has_api_keys, plus billing_enabled and trial_expires_at when applicable }.",
   {},
+  {
+    title: "Billing status",
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
   async () => {
     const err = requireKey();
     if (err) return err;
@@ -604,6 +669,13 @@ server.tool(
       .optional()
       .describe("For reply_comment: the comment text being replied to."),
   },
+  {
+    title: "Draft outreach",
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
   async ({
     idea,
     source,
@@ -618,9 +690,11 @@ server.tool(
     const err = requireKey();
     if (err) return err;
 
+    const fallbackLanguage =
+      GORILLA_DEFAULT_LANGUAGE === "pt" ? "pt" : "en";
     const body: Record<string, unknown> = {
       idea,
-      language: language ?? "en",
+      language: language ?? fallbackLanguage,
       source,
       outreach_action,
       post: {
@@ -657,6 +731,13 @@ server.tool(
   "Build a Week-1 outreach plan from a completed run's HIGH-intent leads, with per-channel send cadence and per-category action register. Behavior: client-side synthesis. Fetches the run via get_run (no extra credit), buckets HIGH leads (lead_score >= 0.7) by source and matched_signals category, then applies fixed cadence heuristics (Reddit / X tolerate 3-4 sends/day; YouTube / TikTok / Instagram only 2 because each comment is more visible). Idempotent and free. Usage: call this immediately after find_leads completes if the user wants a concrete action plan rather than a raw lead dump. Skip it if HIGH lead count is under 5 (the heuristic falls apart on tiny pools, refine the idea and re-run instead). Do NOT call this on a still-running run, results will be incomplete. Returns: a multi-line text plan with the HIGH/MED/total breakdown, per-channel daily send target + follow-up window, per-category action register (ACTIVE_SEARCH, PAIN_OR_FRUSTRATION, SWITCHING, COMPARISON, FEATURE_GAP, COMPETITOR, TUTORIAL, DISCUSSION), and an end-of-week deprioritisation rule.",
   {
     run_id: z.string().describe("The run_id returned by find_leads"),
+  },
+  {
+    title: "Plan acquisition funnel",
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false,
   },
   async ({ run_id }) => {
     const err = requireKey();

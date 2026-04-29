@@ -1,0 +1,11 @@
+src/
+tsconfig.json
+.github/
+.git/
+.gitignore
+CHANGELOG.md
+CONTRIBUTING.md
+SECURITY.md
+Dockerfile
+glama.json
+*.mcpb
