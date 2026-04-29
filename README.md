@@ -6,21 +6,27 @@ Learn more: [usegorilla.app](https://usegorilla.app) · [Real run examples](http
 
 ## Setup
 
+Run directly from GitHub with `npx`:
+
 ```bash
-npm install -g @gorilla/mcp
+GORILLA_API_KEY=grla_... npx -y github:opusforge/gorilla-mcp
 ```
 
-Or run directly:
+Or clone and run locally:
 
 ```bash
-GORILLA_API_KEY=grla_... npx @gorilla/mcp
+git clone https://github.com/opusforge/gorilla-mcp
+cd gorilla-mcp
+npm install && npm run build
+GORILLA_API_KEY=grla_... node dist/index.js
 ```
 
 ### Get your API key
 
-1. Sign in at [gorilla.opusforge.com.br](https://gorilla.opusforge.com.br)
-2. Menu, API Keys, Create
-3. Copy the key (shown once)
+1. Sign up at [usegorilla.app](https://usegorilla.app) and pick a plan ($0.99 single run, $3.99/wk Pro, or $149.99 lifetime).
+2. Sign in at [gorilla.opusforge.com.br](https://gorilla.opusforge.com.br).
+3. Menu, API Keys, Create.
+4. Copy the key (shown once).
 
 ### Configure in Claude Code
 
@@ -31,7 +37,7 @@ Add to your Claude Code settings:
   "mcpServers": {
     "gorilla": {
       "command": "npx",
-      "args": ["@gorilla/mcp"],
+      "args": ["-y", "github:opusforge/gorilla-mcp"],
       "env": {
         "GORILLA_API_KEY": "grla_your_key_here"
       }
@@ -49,7 +55,7 @@ Add to `.cursor/mcp.json`:
   "mcpServers": {
     "gorilla": {
       "command": "npx",
-      "args": ["@gorilla/mcp"],
+      "args": ["-y", "github:opusforge/gorilla-mcp"],
       "env": {
         "GORILLA_API_KEY": "grla_your_key_here"
       }

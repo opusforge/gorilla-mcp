@@ -207,7 +207,7 @@ function requireKey() {
       content: [
         {
           type: "text" as const,
-          text: "GORILLA_API_KEY is not set. Create one at gorilla.opusforge.com.br → Menu → API Keys, then set GORILLA_API_KEY in your environment.",
+          text: "GORILLA_API_KEY is not set. Sign up at https://usegorilla.app, then create a key at gorilla.opusforge.com.br → Menu → API Keys and set GORILLA_API_KEY in your environment.",
         },
       ],
     };
@@ -475,6 +475,204 @@ server.tool(
       ],
     };
   }
+);
+
+// -- draft_outreach -----------------------------------------------------------
+
+server.tool(
+  "draft_outreach",
+  "Draft a platform-tuned outreach message (Reddit comment, X reply, YouTube comment, TikTok comment, Instagram DM, etc.) for a specific lead. Calls Gorilla's server-side drafter so the message follows the platform's tone, length, and self-promo norms. Use this instead of hand-writing copy.",
+  {
+    idea: z
+      .string()
+      .describe("The refined product idea (used as the writer's voice)"),
+    source: z
+      .enum(["reddit", "x", "twitter", "youtube", "tiktok", "instagram"])
+      .describe("Which platform the lead is on"),
+    outreach_action: z
+      .enum([
+        "reply_comment",
+        "comment_post",
+        "reply",
+        "comment",
+        "dm",
+        "dm_post_author",
+        "channel_about",
+        "profile_check",
+      ])
+      .describe(
+        "How to engage. dm/dm_post_author for DMs, comment_post for top-level comments, reply_comment to respond to a specific thread comment, channel_about for YouTube About-tab contact, profile_check for stale posts.",
+      ),
+    post_title: z.string().describe("Title of the lead post"),
+    post_body: z.string().describe("Body / snippet of the lead post"),
+    post_handle: z
+      .string()
+      .optional()
+      .describe("OP handle (e.g. 'u/founder', '@user'). Optional but improves drafts."),
+    language: z
+      .enum(["en", "pt"])
+      .optional()
+      .describe("Output language. Defaults to 'en'."),
+    reply_to_author: z
+      .string()
+      .optional()
+      .describe("For reply_comment: the author of the comment being replied to."),
+    reply_to_text: z
+      .string()
+      .optional()
+      .describe("For reply_comment: the comment text being replied to."),
+  },
+  async ({
+    idea,
+    source,
+    outreach_action,
+    post_title,
+    post_body,
+    post_handle,
+    language,
+    reply_to_author,
+    reply_to_text,
+  }) => {
+    const err = requireKey();
+    if (err) return err;
+
+    const body: Record<string, unknown> = {
+      idea,
+      language: language ?? "en",
+      source,
+      outreach_action,
+      post: {
+        title: post_title,
+        body: post_body,
+        ...(post_handle ? { handle: post_handle } : {}),
+      },
+    };
+    if (reply_to_author && reply_to_text) {
+      body.reply_to_comment = { author: reply_to_author, text: reply_to_text };
+    }
+
+    const { draft } = await call<{ draft: string }>(
+      "POST",
+      "draft-outreach",
+      body,
+    );
+
+    return {
+      content: [
+        {
+          type: "text" as const,
+          text: draft,
+        },
+      ],
+    };
+  },
+);
+
+// -- plan_acquisition_funnel --------------------------------------------------
+
+server.tool(
+  "plan_acquisition_funnel",
+  "Group a completed run's leads by channel, score, and category, and produce a structured first-week acquisition plan: per-channel send volume, suggested action per category bucket, and follow-up cadence. Call this after find_leads completes.",
+  {
+    run_id: z.string().describe("The run_id returned by find_leads"),
+  },
+  async ({ run_id }) => {
+    const err = requireKey();
+    if (err) return err;
+
+    const result = await call<RunResult>("GET", `get-run?id=${run_id}`);
+    const posts = result.results;
+
+    if (posts.length === 0) {
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: `Run ${run_id} returned no leads. Re-run with a sharper idea before planning a funnel.`,
+          },
+        ],
+      };
+    }
+
+    const high = posts.filter((p) => p.lead_score >= 0.7);
+    const med = posts.filter((p) => p.lead_score >= 0.4 && p.lead_score < 0.7);
+
+    // Group HIGH by source and category
+    const bySource = new Map<string, Post[]>();
+    const byCategory = new Map<string, number>();
+    for (const p of high) {
+      const arr = bySource.get(p.source) ?? [];
+      arr.push(p);
+      bySource.set(p.source, arr);
+      const cat = p.matched_signals.find((s) => s.startsWith("category:"))?.slice(9) ?? "OTHER";
+      byCategory.set(cat, (byCategory.get(cat) ?? 0) + 1);
+    }
+
+    // Per-channel cadence heuristic. Reddit + X tolerate higher daily volume than
+    // YouTube/TikTok/Instagram, where each comment is more visible to the creator.
+    const VOLUME = {
+      reddit: { perDay: 3, followUpDays: 5 },
+      twitter: { perDay: 4, followUpDays: 3 },
+      x: { perDay: 4, followUpDays: 3 },
+      youtube: { perDay: 2, followUpDays: 7 },
+      tiktok: { perDay: 2, followUpDays: 7 },
+      instagram: { perDay: 2, followUpDays: 7 },
+    } as Record<string, { perDay: number; followUpDays: number }>;
+
+    const ACTION_BY_CATEGORY: Record<string, string> = {
+      ACTIVE_SEARCH: "Direct answer. They're asking, you have it. Reply within 24h.",
+      PAIN_OR_FRUSTRATION: "Empathy first, link second. Acknowledge the pain in your own words before mentioning the product.",
+      SWITCHING: "Position as the next step, not 'a' next step. Reference what they said they're leaving.",
+      COMPARISON: "Insert as the third option in their list. One concrete tradeoff vs each they named.",
+      FEATURE_GAP: "Lead with the missing feature. Skip the rest of the pitch.",
+      COMPETITOR: "INTEL ONLY. Do not DM. Use to understand positioning.",
+      TUTORIAL: "Skip for outreach. Use for keyword research and content ideas.",
+      DISCUSSION: "Comment publicly, not via DM. Lower-effort, lower-conversion.",
+    };
+
+    const channelLines: string[] = [];
+    let totalWeeklySends = 0;
+    for (const [source, leads] of bySource.entries()) {
+      const v = VOLUME[source] ?? { perDay: 2, followUpDays: 5 };
+      const weekly = Math.min(leads.length, v.perDay * 7);
+      totalWeeklySends += weekly;
+      channelLines.push(
+        `  ${source}: ${leads.length} HIGH leads. Send ${v.perDay}/day (${weekly} this week). Follow up after ${v.followUpDays} days if no reply.`,
+      );
+    }
+
+    const categoryLines: string[] = [];
+    for (const [cat, n] of [...byCategory.entries()].sort((a, b) => b[1] - a[1])) {
+      categoryLines.push(`  ${cat} (${n}): ${ACTION_BY_CATEGORY[cat] ?? "Use the per-lead opener."}`);
+    }
+
+    const text = [
+      `Acquisition funnel for run ${run_id}`,
+      ``,
+      `Pool: ${high.length} HIGH, ${med.length} MED, ${posts.length} total.`,
+      ``,
+      `Per-channel cadence (Week 1):`,
+      ...channelLines,
+      ``,
+      `Total Week 1 send target: ${totalWeeklySends} messages.`,
+      ``,
+      `Action per category:`,
+      ...categoryLines,
+      ``,
+      `Workflow:`,
+      `  1. Triage HIGH leads. Drop the COMPETITOR / TUTORIAL ones.`,
+      `  2. For each remaining lead, call draft_outreach with the right source + outreach_action.`,
+      `  3. Hand-edit each draft for one specific detail from the post.`,
+      `  4. Send. Log it. Move on.`,
+      `  5. After 7 days, follow up only on the channels listed above. One follow-up max.`,
+      ``,
+      `If conversion is below 5% after 50 sends on a channel, deprioritise that channel and re-allocate to whichever is converting.`,
+    ].join("\n");
+
+    return {
+      content: [{ type: "text" as const, text }],
+    };
+  },
 );
 
 // ---------------------------------------------------------------------------

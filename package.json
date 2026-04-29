@@ -1,6 +1,7 @@
 {
   "name": "@gorilla/mcp",
   "version": "1.0.0",
+  "description": "MCP server for Gorilla. Find your first SaaS users on Reddit, X, YouTube, and TikTok. https://usegorilla.app",
   "private": false,
   "type": "module",
   "files": ["dist"],
@@ -9,8 +10,33 @@
   },
   "scripts": {
     "build": "tsc",
-    "dev": "tsx src/index.ts"
+    "dev": "tsx src/index.ts",
+    "prepublishOnly": "npm run build"
   },
+  "homepage": "https://usegorilla.app",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/opusforge/gorilla-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/opusforge/gorilla-mcp/issues"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "lead-generation",
+    "reddit",
+    "twitter",
+    "youtube",
+    "tiktok",
+    "saas",
+    "founders",
+    "social-listening",
+    "anthropic",
+    "claude"
+  ],
+  "author": "OpusForge <gorilla@opusforge.com.br> (https://usegorilla.app)",
+  "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
     "zod": "^3.23.0"
