@@ -5,6 +5,14 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![gorilla-mcp MCP server](https://glama.ai/mcp/servers/opusforge/gorilla-mcp/badges/score.svg)](https://glama.ai/mcp/servers/opusforge/gorilla-mcp)
 
+[![Stars](https://img.shields.io/github/stars/opusforge/gorilla-mcp?style=flat&logo=github)](https://github.com/opusforge/gorilla-mcp/stargazers)
+[![Last commit](https://img.shields.io/github/last-commit/opusforge/gorilla-mcp?logo=github)](https://github.com/opusforge/gorilla-mcp/commits/main)
+[![Open issues](https://img.shields.io/github/issues/opusforge/gorilla-mcp?logo=github)](https://github.com/opusforge/gorilla-mcp/issues)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Node](https://img.shields.io/badge/Node-22.x-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![MCP SDK](https://img.shields.io/badge/MCP_SDK-1.x-7C3AED?logo=anthropic&logoColor=white)](https://modelcontextprotocol.io)
+[![Built for Claude](https://img.shields.io/badge/Built_for-Claude-D97757?logo=anthropic&logoColor=white)](https://claude.ai)
+
 Model Context Protocol server for [Gorilla](https://usegorilla.app). Find your first 100 SaaS users by searching Reddit, YouTube, X, and TikTok for real demand signals.
 
 Learn more: [usegorilla.app](https://usegorilla.app) · [Real run examples](https://usegorilla.app/find-users/) · [How Gorilla compares](https://usegorilla.app/alternatives/) · [Blog](https://usegorilla.app/blog/)
