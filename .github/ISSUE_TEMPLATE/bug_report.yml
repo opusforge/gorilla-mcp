@@ -1,0 +1,35 @@
+name: Bug report
+description: Something doesn't work the way you'd expect.
+title: "[bug]: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: A clear description of the bug. What did you do, what did you expect, what did you get?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: How to reproduce
+      description: Step-by-step. Include the MCP client (Claude Code / Cursor / etc.), the tool you called, and the input.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: gorilla-mcp version
+      description: What version are you on? (run with `npx -y github:opusforge/gorilla-mcp --version` if you're not sure)
+      placeholder: "1.0.1"
+  - type: input
+    id: client
+    attributes:
+      label: MCP client
+      placeholder: "Claude Code 1.0.x / Cursor 0.x / other"
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / error output
+      render: shell

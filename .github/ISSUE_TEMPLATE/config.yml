@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Get a Gorilla API key
+    url: https://usegorilla.app
+    about: Sign up + create a key. Required to actually run the tools.
+  - name: Email security issues
+    url: mailto:gorilla@opusforge.com.br
+    about: Don't open public issues for vulnerabilities. See SECURITY.md.
