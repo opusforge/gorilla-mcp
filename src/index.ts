@@ -1,9 +1,22 @@
 #!/usr/bin/env node
 /// <reference types="node" />
 
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
+
+// --version / -v: print the package version and exit. Saves users from
+// piping into the stdio loop just to find out which version they have.
+const argv = process.argv.slice(2);
+if (argv.includes("--version") || argv.includes("-v")) {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const pkg = JSON.parse(readFileSync(join(here, "..", "package.json"), "utf8")) as { version: string };
+  console.log(pkg.version);
+  process.exit(0);
+}
 
 // ---------------------------------------------------------------------------
 // Configuration

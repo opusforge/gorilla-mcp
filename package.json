@@ -1,6 +1,6 @@
 {
   "name": "@gorilla/mcp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "MCP server for Gorilla. Find your first SaaS users on Reddit, X, YouTube, and TikTok. https://usegorilla.app",
   "private": false,
   "type": "module",
