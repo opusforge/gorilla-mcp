@@ -255,7 +255,7 @@ const server = new McpServer({
 
 server.tool(
   "find_leads",
-  "Run the full Gorilla lead-generation pipeline. Takes an app idea, searches Reddit, YouTube, X, and TikTok for demand signals, and returns scored leads. Usually under 2 minutes.",
+  "Find ranked social posts where people are describing the problem the user's SaaS solves, across Reddit, X, YouTube, and TikTok. Behavior: dispatches the full server-side pipeline (theme expansion, parallel platform search, AI scoring), persists a run row, blocks until the run completes (typically 60 to 120 seconds), and returns the scored leads. Consumes one credit on the user's plan. Idempotent only via the resulting run_id (use get_run to re-read without spending another credit). Usage: call this when the user wants the full lead hunt for an idea. Do NOT call it twice for the same idea in the same session, use get_run to re-analyse. Pair with refine_idea first if the idea is one or two words. After it returns, hand the run_id to plan_acquisition_funnel for a Week-1 outreach plan and to draft_outreach for per-lead messages. Returns: scored leads (source, channel, title, url, lead_score 0-1, matched_signals including category and outreach hints), plus a header line with totals per source.",
   {
     idea: z
       .string()
@@ -281,7 +281,7 @@ server.tool(
 
 server.tool(
   "refine_idea",
-  "Run one round of conversational idea refinement. Returns the refined version of the idea, a readiness score (0-100), one clarifying question to ask the user (or null if ready), and the list of remaining missing info. To continue refining, call again with the original idea, the latest refined_idea, and the appended history of prior {question, answer} pairs. Stops when readiness_score crosses ~75 or after max_turns. Same flow the usegorilla.app /refine page uses.",
+  "Run one round of conversational refinement on a SaaS idea before searching for leads. Behavior: hits the same /refine endpoint the usegorilla.app site uses. Stateless on the server side; the MCP caller must carry history across turns. Does not write any DB rows and does NOT consume a credit. Idempotent. Usage: call this on the first turn with just {idea}, ask the returned question to the user, then call again with the same idea, the previous refined_idea as current_refined_idea, and the new {question, answer} appended to history. Stop when status is 'ready' (readiness_score crosses ~75) or after max_turns. Do NOT call refine_idea after find_leads has already run, the refinement is a pre-search step. Returns: status (ready or needs_answer), refined_idea (full text), readiness_score (0-100) with reason, missing_info list, audience_model, and one next question with suggested options (or null if ready).",
   {
     idea: z.string().describe("The original raw idea text. Stays the same across turns."),
     current_refined_idea: z
@@ -366,7 +366,7 @@ server.tool(
 
 server.tool(
   "search_source",
-  "Search a single social platform (Reddit, X, YouTube, or TikTok) with custom queries. Useful for debugging or targeted searches against a specific channel.",
+  "Run an ad-hoc search against ONE social platform (Reddit, X, YouTube, or TikTok) with caller-provided queries. Behavior: hits the platform-specific search edge function directly, bypassing theme-expansion and AI scoring. Consumes one credit per call. If a run_id is passed, results are written to that run for inspection later via get_run. Without run_id, results are returned but not persisted. Usage: call this when find_leads under-fetched on a specific platform, or to test custom query phrasings (the queries you pass in ARE the queries that get run, no expansion). Do NOT use this as a substitute for find_leads when you want full pipeline behaviour: results from search_source are unscored. To search all four platforms with AI scoring, call find_leads instead. Returns: leads array (raw posts with platform fields, no lead_score) and a count.",
   {
     source: z
       .enum(["reddit", "x", "twitter", "youtube", "tiktok"])
@@ -429,7 +429,7 @@ server.tool(
 
 server.tool(
   "expand_themes",
-  "Generate search keywords, pain points, competitors, and adjacent niches from a product idea. This is the first step of the pipeline.",
+  "Generate the keyword scaffolding (core keywords, adjacent niches, pain points, competitor names, exclusion terms) for a product idea, without running searches. Behavior: hits the same theme-expansion endpoint find_leads calls internally as its first step. Consumes one credit. Stateless; nothing persists. Usage: call this when the user wants to see the search scaffolding before committing to a full run, or when planning manual outreach copy and you want the buyer-language vocabulary. Do NOT use this as a precursor to find_leads in the same session, find_leads runs theme expansion itself; calling both is double-billing. Returns: { core_keywords, adjacent_niches, pain_points, competitor_names, exclusion_terms } as string arrays.",
   {
     idea: z.string().describe("The app idea to expand into search themes"),
   },
@@ -466,7 +466,7 @@ server.tool(
 
 server.tool(
   "get_run",
-  "Fetch the full result for a completed run by its run_id. Returns the same scored-leads payload as find_leads (status, results array of posts with lead_score / matched_signals / source / url, and metadata.elapsed_ms / metadata.errors), but does NOT spend a credit. Use this to re-analyse an earlier run, hand the run_id to plan_acquisition_funnel, or recover from a dropped session. If the run is still 'running', the response includes whatever leads have arrived so far; poll again after a few seconds for the final state.",
+  "Fetch the full result for a previously-started run by its run_id. Behavior: read-only DB query; no external calls and no credit consumed. Idempotent and safe to poll. If status is still 'running', returns whichever leads have already arrived (search-* functions stream into the same posts row as they finish). Usage: call this to re-analyse an earlier run without spending another credit, to hand a fresh leads payload to plan_acquisition_funnel or draft_outreach, or to poll a long-running find_leads job. Do NOT call this without an existing run_id; use list_runs first if you need to find one. Returns: run_id, status (running / completed / failed / partial), idea text, results array (posts with source, channel, title, url, lead_score, matched_signals), and metadata { total_posts, elapsed_ms, errors[] }.",
   {
     run_id: z.string().describe("The run ID returned by find_leads (e.g. 'run_abc123')."),
   },
@@ -486,7 +486,7 @@ server.tool(
 
 server.tool(
   "list_runs",
-  "List the user's previous lead-generation runs (newest first). Each entry has id, idea (the input that was searched), status ('completed' / 'running' / 'failed' / 'partial'), and created_at (UNIX seconds). Useful for finding a recent run_id to feed into get_run or plan_acquisition_funnel without spending another credit on a fresh find_leads call.",
+  "List the user's recent lead-generation runs, newest first, capped at 50. Behavior: read-only DB query scoped to the authenticated user. No external calls, no credit consumed. Idempotent. Usage: call this when the user wants to revisit a previous lead hunt, when you need a run_id to feed into get_run / plan_acquisition_funnel without re-running, or to confirm whether a recent find_leads has completed. Do NOT use this to enumerate other users' runs (the endpoint is user-scoped). Returns: { runs: [{ id, idea, status (completed/running/failed/partial), created_at (UNIX seconds), total_posts, product_title }] }, ordered by created_at desc.",
   {},
   async () => {
     const err = requireKey();
@@ -529,7 +529,7 @@ server.tool(
 
 server.tool(
   "billing_status",
-  "Check your current plan, remaining runs, and referral credits.",
+  "Check the authenticated user's current plan, remaining weekly runs, referral credits, and whether any API keys are active. Behavior: read-only; hits the billing-status edge function which derives the live state from the billing + beta_access tables. Free, no credit consumed. Idempotent. Usage: call this BEFORE find_leads or search_source if you want to confirm the user has runs available, or after a billing-error response to surface why the call was blocked. Useful for the agent to decide whether to recommend an upgrade. Do NOT poll this on a schedule, the values only change when Stripe webhooks fire (sub-minute polling adds no signal). Returns: { plan ('free'/'weekly'/'monthly'/'yearly'/'lifetime'), runs_this_week, weekly_limit, referral_credits, has_api_keys, plus billing_enabled and trial_expires_at when applicable }.",
   {},
   async () => {
     const err = requireKey();
@@ -563,7 +563,7 @@ server.tool(
 
 server.tool(
   "draft_outreach",
-  "Draft a platform-tuned outreach message (Reddit comment, X reply, YouTube comment, TikTok comment, Instagram DM, etc.) for a specific lead. Calls Gorilla's server-side drafter so the message follows the platform's tone, length, and self-promo norms. Use this instead of hand-writing copy.",
+  "Generate a platform-tuned outreach message for a specific lead the user wants to engage. Behavior: hits the draft-outreach edge function which uses an LLM with platform-specific tone profiles (Reddit paragraph, X 280-char reply, YouTube comment, TikTok DM, Instagram caption). Persists nothing. Consumes one credit per draft. Each call is independent; the drafter does not remember previous drafts. Usage: call this once per lead the user picked from a find_leads result. Pick the right outreach_action for the situation: 'comment_post' for a top-level reply on a thread, 'reply_comment' to respond to a specific comment (provide reply_to_author + reply_to_text), 'dm' or 'dm_post_author' for a DM, 'channel_about' for a YouTube About-tab cold intro, 'profile_check' for stale posts where you want a follow-up rather than a direct reply. Do NOT call draft_outreach for COMPETITOR-flagged leads (their matched_signals contains 'category:COMPETITOR') as outreach to a competitor's content is bad form. Do NOT use it to write generic copy unrelated to a specific post. Returns: { draft } as a single string ready to paste, no surrounding chrome.",
   {
     idea: z
       .string()
@@ -654,7 +654,7 @@ server.tool(
 
 server.tool(
   "plan_acquisition_funnel",
-  "Group a completed run's leads by channel, score, and category, and produce a structured first-week acquisition plan: per-channel send volume, suggested action per category bucket, and follow-up cadence. Call this after find_leads completes.",
+  "Build a Week-1 outreach plan from a completed run's HIGH-intent leads, with per-channel send cadence and per-category action register. Behavior: client-side synthesis. Fetches the run via get_run (no extra credit), buckets HIGH leads (lead_score >= 0.7) by source and matched_signals category, then applies fixed cadence heuristics (Reddit / X tolerate 3-4 sends/day; YouTube / TikTok / Instagram only 2 because each comment is more visible). Idempotent and free. Usage: call this immediately after find_leads completes if the user wants a concrete action plan rather than a raw lead dump. Skip it if HIGH lead count is under 5 (the heuristic falls apart on tiny pools, refine the idea and re-run instead). Do NOT call this on a still-running run, results will be incomplete. Returns: a multi-line text plan with the HIGH/MED/total breakdown, per-channel daily send target + follow-up window, per-category action register (ACTIVE_SEARCH, PAIN_OR_FRUSTRATION, SWITCHING, COMPARISON, FEATURE_GAP, COMPETITOR, TUTORIAL, DISCUSSION), and an end-of-week deprioritisation rule.",
   {
     run_id: z.string().describe("The run_id returned by find_leads"),
   },
