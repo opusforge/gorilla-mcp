@@ -35,13 +35,25 @@ interface RuntimeConfig {
   gateway_key: string;
 }
 
+// 15-minute TTL: long enough to avoid hammering the config endpoint on every
+// tool call, short enough that a rotated gateway_key is picked up by the next
+// long-lived MCP session within a quarter-hour.
+const CONFIG_TTL_MS = 15 * 60 * 1000;
+
 let cachedConfig: RuntimeConfig | null = null;
+let cachedConfigAt = 0;
 
 async function getConfig(): Promise<RuntimeConfig> {
-  if (cachedConfig) return cachedConfig;
+  if (cachedConfig && Date.now() - cachedConfigAt < CONFIG_TTL_MS) {
+    return cachedConfig;
+  }
 
   const res = await fetch(CONFIG_URL);
   if (!res.ok) {
+    // If we previously had a config, prefer to keep using it rather than
+    // failing the call. The cached creds may still be valid even if the
+    // config endpoint is briefly down.
+    if (cachedConfig) return cachedConfig;
     throw new Error(
       `Could not load MCP config from ${CONFIG_URL} (HTTP ${res.status}).`,
     );
@@ -56,6 +68,7 @@ async function getConfig(): Promise<RuntimeConfig> {
     api_base: json.api_base.replace(/\/$/, ""),
     gateway_key: json.gateway_key,
   };
+  cachedConfigAt = Date.now();
   return cachedConfig;
 }
 
