@@ -289,11 +289,11 @@ server.tool(
 
 server.tool(
   "search_source",
-  "Search a single platform (reddit, youtube, twitter, tiktok) with custom queries. Useful for debugging or targeted searches.",
+  "Search a single social platform (Reddit, X, YouTube, TikTok) with custom queries. Useful for debugging or targeted searches.",
   {
     source: z
-      .enum(["reddit", "youtube", "twitter", "tiktok"])
-      .describe("Which platform to search"),
+      .enum(["reddit", "x", "twitter", "youtube", "tiktok"])
+      .describe("Which platform to search. Use 'x' for X (formerly Twitter); 'twitter' is accepted as an alias."),
     queries: z
       .array(z.string())
       .describe("Search queries to run on the platform"),
@@ -308,12 +308,16 @@ server.tool(
     const err = requireKey();
     if (err) return err;
 
+    // Backend edge function is search-twitter. Accept 'x' as the canonical
+    // user-facing name and route it to the same backend.
+    const backendSource = source === "x" ? "twitter" : source;
+
     const body: Record<string, unknown> = { queries };
     if (run_id) body.run_id = run_id;
 
     const { leads, count } = await call<{ leads: Post[]; count: number }>(
       "POST",
-      `search-${source}`,
+      `search-${backendSource}`,
       body
     );
 
