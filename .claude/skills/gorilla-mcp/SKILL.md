@@ -42,7 +42,9 @@ This is what you pass to `find_leads`. Richer, more specific input → sharper s
 
 Call **`find_leads(idea: "<sharpened sentence>")`** once. Warn the user it takes 30 to 90 seconds.
 
-Only fall back to **`search_source(source, queries)`** if `find_leads` returns nothing useful on a specific platform and you want to try different phrasing on that platform alone. Never re-run `find_leads` for the same idea in one session. Use **`get_run(run_id)`** to re-analyze existing results.
+`find_leads` searches Reddit, YouTube, X (Twitter), TikTok, and LinkedIn in parallel. Gorilla is paid-only — every run consumes a credit. **LinkedIn is gated tighter still**: only weekly / monthly / lifetime plans include it. The $0.99 one-run plan covers Reddit / YouTube / X / TikTok but not LinkedIn. If the user is on the one-run plan and explicitly wants B2B intent (founders, ops, decision makers), surface that LinkedIn requires a recurring tier and link to https://usegorilla.app/#pricing.
+
+Only fall back to **`search_source(source, queries)`** if `find_leads` returns nothing useful on a specific platform and you want to try different phrasing on that platform alone. Valid sources: `reddit`, `youtube`, `twitter`, `tiktok`, `linkedin`. Never re-run `find_leads` for the same idea in one session. Use **`get_run(run_id)`** to re-analyze existing results.
 
 ## Step 4. Triage by score
 
