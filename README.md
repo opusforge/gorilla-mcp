@@ -88,7 +88,7 @@ Tools are namespaced by domain (`leads.*`, `idea.*`, `runs.*`, `outreach.*`, `ac
 
 ### `leads.find`
 
-Run the full pipeline. Searches Reddit, X, YouTube, and TikTok and returns scored leads. Takes 60-120 seconds. Costs 1 run credit.
+Run the full pipeline. Searches Reddit, X, YouTube, TikTok, and LinkedIn and returns scored leads. (LinkedIn is gated to weekly / monthly / lifetime plans; the $0.99 one-run plan covers the other four.) Takes 60-120 seconds. Costs 1 run credit.
 
 **Parameters:** `idea` (required) — product description
 
@@ -121,7 +121,7 @@ Generate keyword scaffolding (core keywords, adjacent niches, pain points, compe
 Search a single platform with custom queries. Bypasses theme expansion and AI scoring. Costs 1 run credit.
 
 **Parameters:**
-- `source` (required): `reddit`, `x`, `youtube`, or `tiktok`
+- `source` (required): `reddit`, `x`, `youtube`, `tiktok`, or `linkedin` (LinkedIn is Pro-only)
 - `queries` (required): Array of search queries
 - `run_id` (optional): Attach results to an existing run
 
@@ -174,11 +174,11 @@ Build a Week-1 outreach plan from a completed run's HIGH-intent leads, with per-
    → "Who's the target user? Daily commuters or tourists?"
 
 2. leads.find(refined_idea)
-   → 47 leads across Reddit, YouTube, X, and TikTok
+   → 47 leads across Reddit, YouTube, X, TikTok, and LinkedIn (Pro)
    → 12 high-intent (people actively searching for this)
 
 3. outreach.plan(run_id)
-   → Week-1 plan: 3/day on Reddit, 4/day on X, 2/day on YT/TT
+   → Week-1 plan: 3/day on Reddit, 4/day on X, 2/day on YT/TT/LinkedIn
 
 4. outreach.draft(...)  → ready-to-send reply for each high-intent lead
 ```
@@ -199,9 +199,10 @@ Backend URL and gateway key are fetched automatically from `https://gorilla.opus
 
 ## Pricing
 
-- **Single run:** $0.99. Pay per use, no subscription.
-- **Weekly Pro:** $3.99/week, 5 runs.
-- **Lifetime:** $149.99 once, unlimited runs.
+- **Single run:** $0.99. Pay per use, no subscription. Covers Reddit, X, YouTube, TikTok.
+- **Weekly Pro:** $3.99/week, 5 runs. Adds LinkedIn.
+- **Monthly Pro:** $14.99/month. Adds LinkedIn.
+- **Lifetime:** $149.99 once, unlimited runs. Adds LinkedIn.
 
 `leads.find`, `leads.search`, `idea.expand`, and `outreach.draft` each cost 1 run credit. `idea.refine`, `runs.get`, `runs.list`, `account.billing`, and `outreach.plan` are free.
 

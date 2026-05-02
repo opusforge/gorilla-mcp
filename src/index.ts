@@ -170,7 +170,7 @@ function formatPost(p: Post): string {
   const ch =
     p.source === "reddit"
       ? `r/${p.channel.name}`
-      : p.source === "twitter"
+      : p.source === "twitter" || p.source === "linkedin"
         ? `@${p.channel.name}`
         : `${p.source}/${p.channel.name}`;
 
@@ -264,7 +264,7 @@ const server = new McpServer({
 
 server.tool(
   "leads.find",
-  "Find ranked social posts where people are describing the problem the user's SaaS solves, across Reddit, X, YouTube, and TikTok. Behavior: dispatches the full server-side pipeline (theme expansion, parallel platform search, AI scoring), persists a run row, blocks until the run completes (typically 60 to 120 seconds), and returns the scored leads. Consumes one credit on the user's plan. Idempotent only via the resulting run_id (use runs.get to re-read without spending another credit). Usage: call this when the user wants the full lead hunt for an idea. Do NOT call it twice for the same idea in the same session, use runs.get to re-analyse. Pair with idea.refine first if the idea is one or two words. After it returns, hand the run_id to outreach.plan for a Week-1 outreach plan and to outreach.draft for per-lead messages. Returns: scored leads (source, channel, title, url, lead_score 0-1, matched_signals including category and outreach hints), plus a header line with totals per source.",
+  "Find ranked social posts where people are describing the problem the user's SaaS solves, across Reddit, X, YouTube, TikTok, and LinkedIn. LinkedIn is gated to weekly / monthly / lifetime plans only — the $0.99 one-run plan covers the four consumer platforms but skips LinkedIn. Behavior: dispatches the full server-side pipeline (theme expansion, parallel platform search, AI scoring), persists a run row, blocks until the run completes (typically 60 to 120 seconds), and returns the scored leads. Consumes one credit on the user's plan. Idempotent only via the resulting run_id (use runs.get to re-read without spending another credit). Usage: call this when the user wants the full lead hunt for an idea. Do NOT call it twice for the same idea in the same session, use runs.get to re-analyse. Pair with idea.refine first if the idea is one or two words. After it returns, hand the run_id to outreach.plan for a Week-1 outreach plan and to outreach.draft for per-lead messages. Returns: scored leads (source, channel, title, url, lead_score 0-1, matched_signals including category and outreach hints), plus a header line with totals per source.",
   {
     idea: z
       .string()
@@ -396,11 +396,11 @@ server.tool(
 
 server.tool(
   "leads.search",
-  "Run an ad-hoc search against ONE social platform (Reddit, X, YouTube, or TikTok) with caller-provided queries. Behavior: hits the platform-specific search edge function directly, bypassing theme-expansion and AI scoring. Consumes one credit per call. If a run_id is passed, results are written to that run for inspection later via runs.get. Without run_id, results are returned but not persisted. Usage: call this when leads.find under-fetched on a specific platform, or to test custom query phrasings (the queries you pass in ARE the queries that get run, no expansion). Do NOT use this as a substitute for leads.find when you want full pipeline behaviour: results from leads.search are unscored. To search all four platforms with AI scoring, call leads.find instead. Returns: leads array (raw posts with platform fields, no lead_score) and a count.",
+  "Run an ad-hoc search against ONE social platform (Reddit, X, YouTube, TikTok, or LinkedIn) with caller-provided queries. LinkedIn requires a Pro plan (weekly / monthly / lifetime); the other four work on every paid tier. Behavior: hits the platform-specific search edge function directly, bypassing theme-expansion and AI scoring. Consumes one credit per call. If a run_id is passed, results are written to that run for inspection later via runs.get. Without run_id, results are returned but not persisted. Usage: call this when leads.find under-fetched on a specific platform, or to test custom query phrasings (the queries you pass in ARE the queries that get run, no expansion). Do NOT use this as a substitute for leads.find when you want full pipeline behaviour: results from leads.search are unscored. To search all five platforms with AI scoring, call leads.find instead. Returns: leads array (raw posts with platform fields, no lead_score) and a count.",
   {
     source: z
-      .enum(["reddit", "x", "twitter", "youtube", "tiktok"])
-      .describe("Which platform to search. Use 'x' for X (formerly Twitter); 'twitter' is accepted as an alias."),
+      .enum(["reddit", "x", "twitter", "youtube", "tiktok", "linkedin"])
+      .describe("Which platform to search. Use 'x' for X (formerly Twitter); 'twitter' is accepted as an alias. 'linkedin' requires a Pro plan."),
     queries: z
       .array(z.string())
       .describe("Search queries to run on the platform"),
@@ -628,13 +628,13 @@ server.tool(
 
 server.tool(
   "outreach.draft",
-  "Generate a platform-tuned outreach message for a specific lead the user wants to engage. Behavior: hits the draft-outreach edge function which uses an LLM with platform-specific tone profiles (Reddit paragraph, X 280-char reply, YouTube comment, TikTok DM, Instagram caption). Persists nothing. Consumes one credit per draft. Each call is independent; the drafter does not remember previous drafts. Usage: call this once per lead the user picked from a leads.find result. Pick the right outreach_action for the situation: 'comment_post' for a top-level reply on a thread, 'reply_comment' to respond to a specific comment (provide reply_to_author + reply_to_text), 'dm' or 'dm_post_author' for a DM, 'channel_about' for a YouTube About-tab cold intro, 'profile_check' for stale posts where you want a follow-up rather than a direct reply. Do NOT call outreach.draft for COMPETITOR-flagged leads (their matched_signals contains 'category:COMPETITOR') as outreach to a competitor's content is bad form. Do NOT use it to write generic copy unrelated to a specific post. Returns: { draft } as a single string ready to paste, no surrounding chrome.",
+  "Generate a platform-tuned outreach message for a specific lead the user wants to engage. Behavior: hits the draft-outreach edge function which uses an LLM with platform-specific tone profiles (Reddit paragraph, X 280-char reply, YouTube comment, TikTok DM, LinkedIn professional reply / DM). Persists nothing. Consumes one credit per draft. Each call is independent; the drafter does not remember previous drafts. Usage: call this once per lead the user picked from a leads.find result. Pick the right outreach_action for the situation: 'comment_post' for a top-level reply on a thread, 'reply_comment' to respond to a specific comment (provide reply_to_author + reply_to_text), 'dm' or 'dm_post_author' for a DM, 'channel_about' for a YouTube About-tab cold intro, 'profile_check' for stale posts where you want a follow-up rather than a direct reply. Do NOT call outreach.draft for COMPETITOR-flagged leads (their matched_signals contains 'category:COMPETITOR') as outreach to a competitor's content is bad form. Do NOT use it to write generic copy unrelated to a specific post. Returns: { draft } as a single string ready to paste, no surrounding chrome.",
   {
     idea: z
       .string()
       .describe("The refined product idea (used as the writer's voice)"),
     source: z
-      .enum(["reddit", "x", "twitter", "youtube", "tiktok", "instagram"])
+      .enum(["reddit", "x", "twitter", "youtube", "tiktok", "linkedin"])
       .describe("Which platform the lead is on"),
     outreach_action: z
       .enum([
@@ -728,7 +728,7 @@ server.tool(
 
 server.tool(
   "outreach.plan",
-  "Build a Week-1 outreach plan from a completed run's HIGH-intent leads, with per-channel send cadence and per-category action register. Behavior: client-side synthesis. Fetches the run via runs.get (no extra credit), buckets HIGH leads (lead_score >= 0.7) by source and matched_signals category, then applies fixed cadence heuristics (Reddit / X tolerate 3-4 sends/day; YouTube / TikTok / Instagram only 2 because each comment is more visible). Idempotent and free. Usage: call this immediately after leads.find completes if the user wants a concrete action plan rather than a raw lead dump. Skip it if HIGH lead count is under 5 (the heuristic falls apart on tiny pools, refine the idea and re-run instead). Do NOT call this on a still-running run, results will be incomplete. Returns: a multi-line text plan with the HIGH/MED/total breakdown, per-channel daily send target + follow-up window, per-category action register (ACTIVE_SEARCH, PAIN_OR_FRUSTRATION, SWITCHING, COMPARISON, FEATURE_GAP, COMPETITOR, TUTORIAL, DISCUSSION), and an end-of-week deprioritisation rule.",
+  "Build a Week-1 outreach plan from a completed run's HIGH-intent leads, with per-channel send cadence and per-category action register. Behavior: client-side synthesis. Fetches the run via runs.get (no extra credit), buckets HIGH leads (lead_score >= 0.7) by source and matched_signals category, then applies fixed cadence heuristics (Reddit / X tolerate 3-4 sends/day; YouTube / TikTok / LinkedIn only 2 because each engagement is more visible). Idempotent and free. Usage: call this immediately after leads.find completes if the user wants a concrete action plan rather than a raw lead dump. Skip it if HIGH lead count is under 5 (the heuristic falls apart on tiny pools, refine the idea and re-run instead). Do NOT call this on a still-running run, results will be incomplete. Returns: a multi-line text plan with the HIGH/MED/total breakdown, per-channel daily send target + follow-up window, per-category action register (ACTIVE_SEARCH, PAIN_OR_FRUSTRATION, SWITCHING, COMPARISON, FEATURE_GAP, COMPETITOR, TUTORIAL, DISCUSSION), and an end-of-week deprioritisation rule.",
   {
     run_id: z.string().describe("The run_id returned by leads.find"),
   },
@@ -772,14 +772,15 @@ server.tool(
     }
 
     // Per-channel cadence heuristic. Reddit + X tolerate higher daily volume than
-    // YouTube/TikTok/Instagram, where each comment is more visible to the creator.
+    // YouTube/TikTok/LinkedIn, where each engagement is more visible to the
+    // creator (or the prospect's network in LinkedIn's case).
     const VOLUME = {
       reddit: { perDay: 3, followUpDays: 5 },
       twitter: { perDay: 4, followUpDays: 3 },
       x: { perDay: 4, followUpDays: 3 },
       youtube: { perDay: 2, followUpDays: 7 },
       tiktok: { perDay: 2, followUpDays: 7 },
-      instagram: { perDay: 2, followUpDays: 7 },
+      linkedin: { perDay: 2, followUpDays: 7 },
     } as Record<string, { perDay: number; followUpDays: number }>;
 
     const ACTION_BY_CATEGORY: Record<string, string> = {
