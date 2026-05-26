@@ -8,199 +8,176 @@
 
 [![Stars](https://img.shields.io/github/stars/opusforge/gorilla-mcp?style=flat&logo=github)](https://github.com/opusforge/gorilla-mcp/stargazers)
 [![Last commit](https://img.shields.io/github/last-commit/opusforge/gorilla-mcp?logo=github)](https://github.com/opusforge/gorilla-mcp/commits/main)
-[![Open issues](https://img.shields.io/github/issues/opusforge/gorilla-mcp?logo=github)](https://github.com/opusforge/gorilla-mcp/issues)
-[![TypeScript](https://img.shields.io/badge/TypeScript-6.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Node](https://img.shields.io/badge/Node-22.x-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
-[![MCP SDK](https://img.shields.io/badge/MCP_SDK-1.x-7C3AED?logo=anthropic&logoColor=white)](https://modelcontextprotocol.io)
-[![Built for Claude](https://img.shields.io/badge/Built_for-Claude-D97757?logo=anthropic&logoColor=white)](https://claude.ai)
 
-Model Context Protocol server for [Gorilla](https://usegorilla.app). Find your first 100 SaaS users by searching Reddit, X, YouTube, TikTok, LinkedIn, and Threads for real demand signals. Every $5 run hits all six platforms.
+**The one-stop social media search engine for your agent.**
 
-Learn more: [usegorilla.app](https://usegorilla.app) · [Real run examples](https://usegorilla.app/find-users/) · [How Gorilla compares](https://usegorilla.app/alternatives/) · [Blog](https://usegorilla.app/blog/)
+One MCP, one tool call, six platforms — Reddit, X, Threads, LinkedIn, YouTube, and the open web. Results are ranked Hot / Warm / Cold by topic relevance + recency + engagement, and billed per result.
 
-<a href="https://glama.ai/mcp/servers/opusforge/gorilla-mcp">
-  <img width="380" src="https://glama.ai/mcp/servers/opusforge/gorilla-mcp/badges/card.svg" alt="gorilla-mcp MCP server">
-</a>
-
-## Setup
-
-Run directly from GitHub with `npx`:
-
-```bash
-GORILLA_API_KEY=grla_... npx -y github:opusforge/gorilla-mcp
+```
+search({ query: "people complaining about meal planning", since: "7d" })
+→ 47 ranked posts: 12 Hot, 18 Warm, 17 Cold
+→ $1.42 charged, 18,582 credits left
 ```
 
-Or clone and run locally:
+---
+
+## Install
 
 ```bash
-git clone https://github.com/opusforge/gorilla-mcp
-cd gorilla-mcp
-npm install && npm run build
-GORILLA_API_KEY=grla_... node dist/index.js
+npm install -g @gorilla/mcp
 ```
 
-### Get your API key
+Or run directly via npx (no install):
 
-1. Sign up at [usegorilla.app](https://usegorilla.app). $5 per run, no subscription.
-2. Sign in at [platform.usegorilla.app](https://platform.usegorilla.app).
-3. Menu, API Keys, Create.
-4. Copy the key (shown once).
+```bash
+GORILLA_API_KEY=grla_... npx @gorilla/mcp
+```
 
-### Configure in Claude Code
+## Get your API key
 
-Add to your Claude Code settings:
+1. Sign in at [platform.usegorilla.app](https://platform.usegorilla.app/login/).
+2. Open **API keys** → **Create**.
+3. Copy the key (shown once, prefixed `grla_`).
+
+New accounts get **1,000 credits / week** on the free tier. No card required.
+
+## Configure
+
+### Claude Desktop / Claude Code
+
+`~/.claude.json`:
 
 ```json
 {
   "mcpServers": {
-    "gorilla": {
+    "gorilla-mcp": {
       "command": "npx",
-      "args": ["-y", "github:opusforge/gorilla-mcp"],
-      "env": {
-        "GORILLA_API_KEY": "grla_your_key_here"
-      }
+      "args": ["@gorilla/mcp"],
+      "env": { "GORILLA_API_KEY": "grla_your_key_here" }
     }
   }
 }
 ```
 
-### Configure in Cursor
+### Cursor
 
-Add to `.cursor/mcp.json`:
+`.cursor/mcp.json` (same shape):
 
 ```json
 {
   "mcpServers": {
-    "gorilla": {
+    "gorilla-mcp": {
       "command": "npx",
-      "args": ["-y", "github:opusforge/gorilla-mcp"],
-      "env": {
-        "GORILLA_API_KEY": "grla_your_key_here"
-      }
+      "args": ["@gorilla/mcp"],
+      "env": { "GORILLA_API_KEY": "grla_your_key_here" }
     }
   }
 }
 ```
+
+### Codex / OpenAI agents
+
+`~/.codex/config.toml`:
+
+```toml
+[mcp_servers.gorilla]
+command = "npx"
+args = ["@gorilla/mcp"]
+env = { GORILLA_API_KEY = "grla_..." }
+```
+
+---
 
 ## Tools
 
-Tools are namespaced by domain (`leads.*`, `idea.*`, `runs.*`, `outreach.*`, `account.*`).
+Three tools, mirroring the REST API at `/v2-search-stream`. Full request / response shape lives in the [API docs](https://usegorilla.app/docs/).
 
-### `leads.find`
+### `search`
 
-Run the full pipeline. Searches Reddit, X, YouTube, TikTok, LinkedIn, and Threads and returns scored leads. All six platforms hit on every $5 run. Takes 60-120 seconds. Costs 1 run credit.
+The main tool. Searches across every supported platform for posts related to your query and returns scored, ranked results.
 
-**Parameters:** `idea` (required) — product description
+| Param | Type | Notes |
+|---|---|---|
+| `query` | string (required) | What to search for, in your own words. Sent verbatim to each source. |
+| `source` | enum | One of `reddit`, `twitter`, `threads`, `linkedin`, `youtube`, `web`, or `all`. Default `all`. |
+| `since` | string | `24h` / `7d` / `30d` / `180d` / `6mo` / `all`, or an ISO date. Default backend-side. |
+| `limit` | int | Max results returned. 1–200. Default 50. |
 
-**Returns:** Scored leads with source, channel, title, URL, lead_score (0-1), and outreach hints.
+**Pricing:** Hot $0.10 / Warm $0.03 / Cold $0.003 per result. **No caps.** Failed searches are fully refunded.
 
----
-
-### `idea.refine`
-
-Conversational refinement. Returns one clarifying question at a time to sharpen the idea before searching. Free.
-
-**Parameters:** `idea` (required), plus `current_refined_idea`, `history`, `language`, `turn`, `max_turns` (all optional)
-
-**Returns:** Status, refined_idea, readiness_score, and the next question (or null when ready).
-
----
-
-### `idea.expand`
-
-Generate keyword scaffolding (core keywords, adjacent niches, pain points, competitor names, exclusion terms) without running searches. Costs 1 run credit.
-
-**Parameters:** `idea` (required)
-
-**Returns:** Structured themes for targeted searches.
-
----
-
-### `leads.search`
-
-Search a single platform with custom queries. Bypasses theme expansion and AI scoring. Costs 1 run credit.
-
-**Parameters:**
-- `source` (required): `reddit`, `x`, `youtube`, `tiktok`, or `linkedin` (LinkedIn is Pro-only)
-- `queries` (required): Array of search queries
-- `run_id` (optional): Attach results to an existing run
-
-**Returns:** Raw leads from the specified platform.
-
----
-
-### `runs.get`
-
-Fetch results for a previously-started run. Free.
-
-**Parameters:** `run_id` (required)
-
----
-
-### `runs.list`
-
-List your last 50 runs, newest first. Free.
-
----
-
-### `account.billing`
-
-Check your plan, remaining weekly runs, and referral credits. Free.
-
-**Returns:** Plan name, weekly usage, referral credits, total available runs.
-
----
-
-### `outreach.draft`
-
-Generate a platform-tuned outreach message for a specific lead. Costs 1 run credit per draft.
-
-**Parameters:** `idea`, `source`, `outreach_action`, `post_title`, `post_body` (required), plus optional `post_handle`, `language`, `reply_to_author`, `reply_to_text`.
-
-**Returns:** A ready-to-paste draft.
-
----
-
-### `outreach.plan`
-
-Build a Week-1 outreach plan from a completed run's HIGH-intent leads, with per-channel send cadence. Free.
-
-**Parameters:** `run_id` (required)
-
-## Example workflow
+**Returns:** Up to 50 ranked posts with `search_id`, per-source counts, bucket totals, credits charged + remaining. Title, score, channel, snippet, and URL on each post.
 
 ```
-1. idea.refine("a language learning app for travelers")
-   → "Who's the target user? Daily commuters or tourists?"
-
-2. leads.find(refined_idea)
-   → 47 leads across Reddit, X, YouTube, TikTok, LinkedIn, and Threads
-   → 12 high-intent (people actively searching for this)
-
-3. outreach.plan(run_id)
-   → Week-1 plan: 3/day on Reddit, 4/day on X, 3/day on Threads, 2/day on YT/TT/LinkedIn
-
-4. outreach.draft(...)  → ready-to-send reply for each high-intent lead
+search({
+  query: "anyone looking for an AI meal planner",
+  source: "all",
+  since: "7d"
+})
 ```
 
-### Install via Smithery
+Internally: POSTs to `/v2-search-stream`, then polls until `status !== "running"`. If the search exceeds 5 minutes client-side, returns the `search_id` so you can recover later with `get_search`.
 
-Available at [smithery.ai/server/opusforge/gorilla-mcp](https://smithery.ai/server/opusforge/gorilla-mcp). Smithery distributes a pre-built MCPB bundle that any MCPB-compatible client can install in one click.
+### `get_search`
 
-## Environment variables
+Fetch the current state and results for any search by ID. Use to recover a search that timed out client-side, or to re-read a recent one.
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `GORILLA_API_KEY` | Yes | Your API key (starts with `grla_`) |
-| `GORILLA_DEFAULT_LANGUAGE` | No | Fallback language for `idea.refine` and `outreach.draft` (`en`, `pt`, `all`). Default: `en`. |
-| `GORILLA_CONFIG_URL` | No | Override the runtime config endpoint. Useful for staging or self-hosted deployments. |
+| Param | Type | Notes |
+|---|---|---|
+| `search_id` | string (required) | The `search_id` returned by a prior `search` call. |
 
-Backend URL and gateway key are fetched automatically from `https://platform.usegorilla.app/mcp-config.json` on startup. No other configuration required.
+**Pricing:** free.
+
+### `billing_status`
+
+Check your plan + credit balance.
+
+**Pricing:** free.
+
+---
 
 ## Pricing
 
-- **Single run:** $5 flat. Pay per use, no subscription. Hits all six platforms (Reddit, X, YouTube, TikTok, LinkedIn, Threads).
+Per result, by quality. **No caps.** Failed searches are fully refunded.
 
-`leads.find`, `leads.search`, `idea.expand`, and `outreach.draft` each cost 1 run credit. `idea.refine`, `runs.get`, `runs.list`, `account.billing`, and `outreach.plan` are free.
+| Bucket | Score | Credits | USD |
+|---|---|---|---|
+| 🔥 Hot | ≥ 0.7 | 100 | $0.10 |
+| 🟡 Warm | 0.4 – 0.7 | 30 | $0.03 |
+| ❄️ Cold | < 0.4 | 3 | $0.003 |
 
-See [usegorilla.app](https://usegorilla.app) for the full product.
+A typical multi-platform query returns ~50 results across mixed buckets — usually **$1–2**.
+
+### Tiers
+
+- **Free** — 1,000 credits / week. Refills weekly. No card.
+- **Monthly** — $14.99/month → 20,000 credits / month. Resets on renewal.
+- **One-time pack** — $5 → 5,000 credits. Stacks on top of the monthly bundle, credits never expire.
+
+Subscribe or top up at [platform.usegorilla.app/billing](https://platform.usegorilla.app/billing/).
+
+---
+
+## Environment variables
+
+| Var | Required | Notes |
+|---|---|---|
+| `GORILLA_API_KEY` | yes | Your `grla_…` key. Create at [platform.usegorilla.app/api-keys/](https://platform.usegorilla.app/api-keys/). |
+| `GORILLA_CONFIG_URL` | no | Override the runtime config endpoint (advanced — for self-hosted or staging Supabase). Default: `https://platform.usegorilla.app/mcp-config.json`. |
+
+---
+
+## What's new in v3
+
+v3 (2026-05-25) collapses the older tool surface (`leads.find`, `idea.refine`, `runs.list`, `outreach.draft`, etc.) down to just `search` + `get_search` + `billing_status`. The pipeline tools were tied to a legacy run-pipeline backend that's been retired — everything now goes through one streaming search endpoint that returns ranked posts directly.
+
+See [CHANGELOG.md](CHANGELOG.md) for the full migration notes.
+
+---
+
+## Support
+
+- API key issues → [platform.usegorilla.app/api-keys/](https://platform.usegorilla.app/api-keys/)
+- Billing → [platform.usegorilla.app/billing/](https://platform.usegorilla.app/billing/)
+- Bugs → quote the `search_id` when reporting → [open an issue](https://github.com/opusforge/gorilla-mcp/issues)
+
+Built by [OpusForge](https://opusforge.com.br) · MIT licensed.

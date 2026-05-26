@@ -2,6 +2,52 @@
 
 All notable changes to the Gorilla MCP server are documented here.
 
+## [3.0.0] - 2026-05-25
+
+### Breaking
+- The Gorilla product surface collapsed from 9 tools to 3. Every tool tied
+  to the legacy run-pipeline backend was removed:
+    - `idea.refine`, `idea.expand`        → backend `refine` / `theme-expansion` functions removed.
+    - `outreach.draft`, `outreach.plan`   → backend `draft-outreach` function removed.
+    - `runs.get`, `runs.list`             → the `runs` table itself was dropped.
+    - `leads.search` (per-platform fan-out variant)  → folded into `leads.find`.
+  Agents and skills that called any of the above will get an "unknown tool"
+  error from this MCP. Update your callers to use the surviving tools below.
+
+### Tools (v3)
+- `leads.find`     — multi-source search via the new `/v2-search-stream`
+                     endpoint. POST kicks off, GET polls until per-source
+                     orchestration completes. Returns formatted Hot / Warm /
+                     Cold ranked posts. Six sources: reddit, twitter,
+                     threads, linkedin, youtube, web.
+- `leads.get`      — fetch the current state + results for any search by
+                     its `search_id`. Use to recover a timed-out call.
+- `account.billing` — plan + credit balance + pricing tier reference.
+
+### Changed
+- TikTok dropped from the source list (the v2 TikTok client never made it
+  out of probing — the Apify actor's available data was too thin to score).
+- `web` added as the sixth source. Powered by SerpAPI Google with per-URL
+  enrichment (extracts page body inline so the LLM ranker has real content
+  to score, not just title + meta description).
+- Pricing surface in `account.billing` now reflects the V4 SKUs:
+    - Free: 1,000 credits / week
+    - Monthly: $14.99 → 20,000 credits / month (resets on renewal)
+    - One-time pack: $5 → 5,000 credits (credits never expire)
+  Pay-as-you-go overage removed — top up with one-time packs instead.
+- `account.billing` "Get a key" instruction now points at
+  `platform.usegorilla.app/api-keys/` (was "Menu → API Keys").
+
+### Migration
+- `npm i -g @gorilla/mcp@3.0.0` (or `@latest`).
+- Replace any prior tool calls:
+    - `leads.search({source:"reddit"})` → `leads.find({source:"reddit"})`
+    - `idea.refine` / `idea.expand`     → drop, the new search handles
+                                          theme expansion internally
+    - `outreach.draft` / `outreach.plan` → drop, no replacement
+    - `runs.get` / `runs.list`          → drop, no equivalent (use
+                                          `leads.get(search_id)` instead)
+
 ## [2.0.1] - 2026-05-10
 
 ### Changed

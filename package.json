@@ -1,7 +1,7 @@
 {
   "name": "@gorilla/mcp",
-  "version": "2.0.1",
-  "description": "MCP server for Gorilla. Find your first SaaS users on Reddit, X, YouTube, TikTok, LinkedIn, and Threads. https://usegorilla.app",
+  "version": "3.0.0",
+  "description": "MCP server for Gorilla. Search Reddit, X, Threads, LinkedIn, YouTube, and the open web from your agent. Rank, score, and price by result. https://usegorilla.app",
   "private": false,
   "type": "module",
   "files": [
@@ -29,15 +29,18 @@
     "lead-generation",
     "reddit",
     "twitter",
+    "x",
     "youtube",
-    "tiktok",
     "linkedin",
     "threads",
+    "web-search",
     "saas",
     "founders",
     "social-listening",
     "anthropic",
-    "claude"
+    "claude",
+    "cursor",
+    "codex"
   ],
   "author": "OpusForge <gorilla@opusforge.com.br> (https://usegorilla.app)",
   "license": "MIT",

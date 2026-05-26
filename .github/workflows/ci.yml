@@ -30,6 +30,6 @@ jobs:
             echo '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}'
             sleep 0.5
           ) | timeout 8 node dist/index.js | tee /tmp/mcp.out
-          grep -q '"name":"leads.find"' /tmp/mcp.out
-          grep -q '"name":"outreach.draft"' /tmp/mcp.out
-          grep -q '"name":"outreach.plan"' /tmp/mcp.out
+          grep -q '"name":"search"' /tmp/mcp.out
+          grep -q '"name":"get_search"' /tmp/mcp.out
+          grep -q '"name":"billing_status"' /tmp/mcp.out
