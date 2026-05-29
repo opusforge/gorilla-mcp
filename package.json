@@ -1,14 +1,14 @@
 {
-  "name": "@gorilla/mcp",
+  "name": "@usegorilla/mcp",
   "version": "2.0.1",
-  "description": "MCP server for Gorilla. Find your first SaaS users on Reddit, X, YouTube, TikTok, LinkedIn, and Threads. https://usegorilla.app",
+  "description": "MCP server for Gorilla. Find your first SaaS users on Reddit, X, YouTube, LinkedIn, and Bluesky. https://usegorilla.app",
   "private": false,
   "type": "module",
   "files": [
     "dist"
   ],
   "bin": {
-    "gorilla-mcp": "./dist/index.js"
+    "gorilla-mcp": "dist/index.js"
   },
   "scripts": {
     "build": "tsc",
@@ -30,9 +30,8 @@
     "reddit",
     "twitter",
     "youtube",
-    "tiktok",
     "linkedin",
-    "threads",
+    "bluesky",
     "saas",
     "founders",
     "social-listening",

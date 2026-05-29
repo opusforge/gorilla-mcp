@@ -14,7 +14,7 @@
 [![MCP SDK](https://img.shields.io/badge/MCP_SDK-1.x-7C3AED?logo=anthropic&logoColor=white)](https://modelcontextprotocol.io)
 [![Built for Claude](https://img.shields.io/badge/Built_for-Claude-D97757?logo=anthropic&logoColor=white)](https://claude.ai)
 
-Model Context Protocol server for [Gorilla](https://usegorilla.app). Find your first 100 SaaS users by searching Reddit, X, YouTube, TikTok, LinkedIn, and Threads for real demand signals. Every $5 run hits all six platforms.
+Model Context Protocol server for [Gorilla](https://usegorilla.app). Find your first 100 SaaS users by searching Reddit, X, YouTube, LinkedIn, and Bluesky for real demand signals. Every $5 run hits all five platforms.
 
 Learn more: [usegorilla.app](https://usegorilla.app) · [Real run examples](https://usegorilla.app/find-users/) · [How Gorilla compares](https://usegorilla.app/alternatives/) · [Blog](https://usegorilla.app/blog/)
 
@@ -88,7 +88,7 @@ Tools are namespaced by domain (`leads.*`, `idea.*`, `runs.*`, `outreach.*`, `ac
 
 ### `leads.find`
 
-Run the full pipeline. Searches Reddit, X, YouTube, TikTok, LinkedIn, and Threads and returns scored leads. All six platforms hit on every $5 run. Takes 60-120 seconds. Costs 1 run credit.
+Run the full pipeline. Searches Reddit, X, YouTube, LinkedIn, and Bluesky and returns scored leads. All five platforms hit on every $5 run. Takes 60-120 seconds. Costs 1 run credit.
 
 **Parameters:** `idea` (required) — product description
 
@@ -121,7 +121,7 @@ Generate keyword scaffolding (core keywords, adjacent niches, pain points, compe
 Search a single platform with custom queries. Bypasses theme expansion and AI scoring. Costs 1 run credit.
 
 **Parameters:**
-- `source` (required): `reddit`, `x`, `youtube`, `tiktok`, or `linkedin` (LinkedIn is Pro-only)
+- `source` (required): `reddit`, `x`, `youtube`, `linkedin`, or `bluesky` (LinkedIn is Pro-only)
 - `queries` (required): Array of search queries
 - `run_id` (optional): Attach results to an existing run
 
@@ -174,11 +174,11 @@ Build a Week-1 outreach plan from a completed run's HIGH-intent leads, with per-
    → "Who's the target user? Daily commuters or tourists?"
 
 2. leads.find(refined_idea)
-   → 47 leads across Reddit, X, YouTube, TikTok, LinkedIn, and Threads
+   → 47 leads across Reddit, X, YouTube, LinkedIn, and Bluesky
    → 12 high-intent (people actively searching for this)
 
 3. outreach.plan(run_id)
-   → Week-1 plan: 3/day on Reddit, 4/day on X, 3/day on Threads, 2/day on YT/TT/LinkedIn
+   → Week-1 plan: 3/day on Reddit, 4/day on X, 3/day on Bluesky, 2/day on YouTube/LinkedIn
 
 4. outreach.draft(...)  → ready-to-send reply for each high-intent lead
 ```
@@ -199,7 +199,7 @@ Backend URL and gateway key are fetched automatically from `https://platform.use
 
 ## Pricing
 
-- **Single run:** $5 flat. Pay per use, no subscription. Hits all six platforms (Reddit, X, YouTube, TikTok, LinkedIn, Threads).
+- **Single run:** $5 flat. Pay per use, no subscription. Hits all five platforms (Reddit, X, YouTube, LinkedIn, Bluesky).
 
 `leads.find`, `leads.search`, `idea.expand`, and `outreach.draft` each cost 1 run credit. `idea.refine`, `runs.get`, `runs.list`, `account.billing`, and `outreach.plan` are free.
 
