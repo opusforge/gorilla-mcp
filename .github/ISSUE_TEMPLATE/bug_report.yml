@@ -21,7 +21,7 @@ body:
     id: version
     attributes:
       label: gorilla-mcp version
-      description: What version are you on? (run with `npx -y github:opusforge/gorilla-mcp --version` if you're not sure)
+      description: What version are you on? (run with `npx -y @usegorilla/mcp --version` if you're not sure)
       placeholder: "1.0.1"
   - type: input
     id: client

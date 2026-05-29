@@ -27,7 +27,7 @@ Learn more: [usegorilla.app](https://usegorilla.app) · [Real run examples](http
 Run directly from GitHub with `npx`:
 
 ```bash
-GORILLA_API_KEY=grla_... npx -y github:opusforge/gorilla-mcp
+GORILLA_API_KEY=grla_... npx -y @usegorilla/mcp
 ```
 
 Or clone and run locally:
@@ -55,7 +55,7 @@ Add to your Claude Code settings:
   "mcpServers": {
     "gorilla": {
       "command": "npx",
-      "args": ["-y", "github:opusforge/gorilla-mcp"],
+      "args": ["-y", "@usegorilla/mcp"],
       "env": {
         "GORILLA_API_KEY": "grla_your_key_here"
       }
@@ -73,7 +73,7 @@ Add to `.cursor/mcp.json`:
   "mcpServers": {
     "gorilla": {
       "command": "npx",
-      "args": ["-y", "github:opusforge/gorilla-mcp"],
+      "args": ["-y", "@usegorilla/mcp"],
       "env": {
         "GORILLA_API_KEY": "grla_your_key_here"
       }

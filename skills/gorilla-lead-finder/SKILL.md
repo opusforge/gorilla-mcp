@@ -31,7 +31,7 @@ This skill helps solo founders find their first paying users by surfacing real s
 The skill calls the Gorilla MCP server. Install it once:
 
 ```bash
-npx -y github:opusforge/gorilla-mcp
+npx -y @usegorilla/mcp
 ```
 
 Configure in Claude Code or Cursor. Sign up at https://usegorilla.app to get a `GORILLA_API_KEY`. Pricing: $5 per run, no subscription. All six platforms included on every run.
