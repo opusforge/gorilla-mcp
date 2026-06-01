@@ -264,7 +264,7 @@ const server = new McpServer({
 
 server.tool(
   "leads.find",
-  "Find ranked social posts where people are describing the problem the user's SaaS solves, across Reddit, X, YouTube, LinkedIn, and Bluesky. Every $5 run hits all five platforms. Behavior: dispatches the full server-side pipeline (theme expansion, parallel platform search, AI scoring), persists a run row, blocks until the run completes (typically 60 to 120 seconds), and returns the scored leads. Consumes one credit on the user's plan. Idempotent only via the resulting run_id (use runs.get to re-read without spending another credit). Usage: call this when the user wants the full lead hunt for an idea. Do NOT call it twice for the same idea in the same session, use runs.get to re-analyse. Pair with idea.refine first if the idea is one or two words. After it returns, hand the run_id to outreach.plan for a Week-1 outreach plan and to outreach.draft for per-lead messages. Returns: scored leads (source, channel, title, url, lead_score 0-1, matched_signals including category and outreach hints), plus a header line with totals per source.",
+  "Find ranked social posts where people are describing the problem the user's SaaS solves, across Reddit, X, YouTube, LinkedIn, and Bluesky. Behavior: dispatches the full server-side pipeline (theme expansion, parallel platform search, AI scoring), persists a run row, blocks until the run completes (typically 60 to 120 seconds), and returns the scored leads. Billing: one credit per qualified lead (hot or warm); low-relevance results are free, and a failed search refunds. LinkedIn is a paid-plan source; free and anonymous searches cover Reddit, X, YouTube, and Bluesky. Idempotent only via the resulting run_id (use runs.get to re-read without spending more credits). Usage: call this when the user wants the full lead hunt for an idea. Do NOT call it twice for the same idea in the same session, use runs.get to re-analyse. Pair with idea.refine first if the idea is one or two words. After it returns, hand the run_id to outreach.plan for a Week-1 outreach plan and to outreach.draft for per-lead messages. Returns: scored leads (source, channel, title, url, lead_score 0-1, matched_signals including category and outreach hints), plus a header line with totals per source.",
   {
     idea: z
       .string()
@@ -396,7 +396,7 @@ server.tool(
 
 server.tool(
   "leads.search",
-  "Run an ad-hoc search against ONE social platform (Reddit, X, YouTube, LinkedIn, or Bluesky) with caller-provided queries. All five platforms are available on every paid tier. Behavior: hits the platform-specific search edge function directly, bypassing theme-expansion and AI scoring. Consumes one credit per call. If a run_id is passed, results are written to that run for inspection later via runs.get. Without run_id, results are returned but not persisted. Usage: call this when leads.find under-fetched on a specific platform, or to test custom query phrasings (the queries you pass in ARE the queries that get run, no expansion). Do NOT use this as a substitute for leads.find when you want full pipeline behaviour: results from leads.search are unscored. To search all five platforms with AI scoring, call leads.find instead. Returns: leads array (raw posts with platform fields, no lead_score) and a count.",
+  "Run an ad-hoc search against ONE social platform (Reddit, X, YouTube, LinkedIn, or Bluesky) with caller-provided queries. Reddit, X, YouTube, and Bluesky work on the free trial; LinkedIn is a paid-plan source. Behavior: hits the platform-specific search edge function directly, bypassing theme-expansion and AI scoring. Billing: one credit per qualified lead returned; low-relevance results are free. If a run_id is passed, results are written to that run for inspection later via runs.get. Without run_id, results are returned but not persisted. Usage: call this when leads.find under-fetched on a specific platform, or to test custom query phrasings (the queries you pass in ARE the queries that get run, no expansion). Do NOT use this as a substitute for leads.find when you want full pipeline behaviour: results from leads.search are unscored. To search all five platforms with AI scoring, call leads.find instead. Returns: leads array (raw posts with platform fields, no lead_score) and a count.",
   {
     source: z
       .enum(["reddit", "x", "twitter", "youtube", "linkedin", "bluesky"])
@@ -466,7 +466,7 @@ server.tool(
 
 server.tool(
   "idea.expand",
-  "Generate the keyword scaffolding (core keywords, adjacent niches, pain points, competitor names, exclusion terms) for a product idea, without running searches. Behavior: hits the same theme-expansion endpoint leads.find calls internally as its first step. Consumes one credit. Stateless; nothing persists. Usage: call this when the user wants to see the search scaffolding before committing to a full run, or when planning manual outreach copy and you want the buyer-language vocabulary. Do NOT use this as a precursor to leads.find in the same session, leads.find runs theme expansion itself; calling both is double-billing. Returns: { core_keywords, adjacent_niches, pain_points, competitor_names, exclusion_terms } as string arrays.",
+  "Generate the keyword scaffolding (core keywords, adjacent niches, pain points, competitor names, exclusion terms) for a product idea, without running searches. Behavior: hits the same theme-expansion endpoint leads.find calls internally as its first step. Free; no leads are returned so no credits are spent. Stateless; nothing persists. Usage: call this when the user wants to see the search scaffolding before committing to a full run, or when planning manual outreach copy and you want the buyer-language vocabulary. Do NOT use this as a precursor to leads.find in the same session, leads.find runs theme expansion itself; calling both is redundant. Returns: { core_keywords, adjacent_niches, pain_points, competitor_names, exclusion_terms } as string arrays.",
   {
     idea: z.string().describe("The app idea to expand into search themes"),
   },
@@ -587,7 +587,7 @@ server.tool(
 
 server.tool(
   "account.billing",
-  "Check the authenticated user's current plan, remaining weekly runs, referral credits, and whether any API keys are active. Behavior: read-only; hits the billing-status edge function which derives the live state from the billing + beta_access tables. Free, no credit consumed. Idempotent. Usage: call this BEFORE leads.find or leads.search if you want to confirm the user has runs available, or after a billing-error response to surface why the call was blocked. Useful for the agent to decide whether to recommend an upgrade. Do NOT poll this on a schedule, the values only change when Stripe webhooks fire (sub-minute polling adds no signal). Returns: { plan ('free'/'weekly'/'monthly'/'yearly'/'lifetime'), runs_this_week, weekly_limit, referral_credits, has_api_keys, plus billing_enabled and trial_expires_at when applicable }.",
+  "Check the authenticated user's current plan and remaining credit balance, plus whether any API keys are active. Behavior: read-only; hits the billing-status edge function which derives the live state from the billing table and the credit ledger. Free, no credit consumed. Idempotent. Usage: call this BEFORE leads.find or leads.search if you want to confirm the user has credits available, or after a billing-error response to surface why the call was blocked. Useful for the agent to decide whether to recommend an upgrade. Do NOT poll this on a schedule, the values only change when a search spends credits or a Stripe webhook fires. Returns: { plan ('free' or 'monthly'), balance { tier, pack, overage, total }, has_api_keys, billing_enabled }. Credits meter one per qualified lead (hot or warm); low-relevance results are free.",
   {},
   {
     title: "Billing status",
@@ -602,22 +602,16 @@ server.tool(
 
     const billing = await call<{
       plan: string;
-      runs_this_week: number;
-      weekly_limit: number;
-      referral_credits: number;
+      balance: { tier: number; pack: number; overage: number; total: number };
+      has_api_keys: boolean;
+      billing_enabled?: boolean;
     }>("GET", "billing-status");
-
-    const weeklyRemaining = Math.max(
-      0,
-      billing.weekly_limit - billing.runs_this_week
-    );
-    const total = weeklyRemaining + billing.referral_credits;
 
     return {
       content: [
         {
           type: "text" as const,
-          text: `Plan: ${billing.plan}\nWeekly runs: ${billing.runs_this_week}/${billing.weekly_limit} used\nReferral credits: ${billing.referral_credits}\nTotal runs available: ${total}`,
+          text: `Plan: ${billing.plan}\nCredits remaining: ${billing.balance.total} (tier ${billing.balance.tier} + pack ${billing.balance.pack})`,
         },
       ],
     };
@@ -628,7 +622,7 @@ server.tool(
 
 server.tool(
   "outreach.draft",
-  "Generate a platform-tuned outreach message for a specific lead the user wants to engage. Behavior: hits the draft-outreach edge function which uses an LLM with platform-specific tone profiles (Reddit paragraph, X 280-char reply, YouTube comment, LinkedIn professional reply / DM, Bluesky short reply). Persists nothing. Consumes one credit per draft. Each call is independent; the drafter does not remember previous drafts. Usage: call this once per lead the user picked from a leads.find result. Pick the right outreach_action for the situation: 'comment_post' for a top-level reply on a thread, 'reply_comment' to respond to a specific comment (provide reply_to_author + reply_to_text), 'dm' or 'dm_post_author' for a DM, 'channel_about' for a YouTube About-tab cold intro, 'profile_check' for stale posts where you want a follow-up rather than a direct reply. Do NOT call outreach.draft for COMPETITOR-flagged leads (their matched_signals contains 'category:COMPETITOR') as outreach to a competitor's content is bad form. Do NOT use it to write generic copy unrelated to a specific post. Returns: { draft } as a single string ready to paste, no surrounding chrome.",
+  "Generate a platform-tuned outreach message for a specific lead the user wants to engage. Behavior: hits the draft-outreach edge function which uses an LLM with platform-specific tone profiles (Reddit paragraph, X 280-char reply, YouTube comment, LinkedIn professional reply / DM, Bluesky short reply). Persists nothing. No credits are spent (credits meter only on qualified leads returned by a search). Each call is independent; the drafter does not remember previous drafts. Usage: call this once per lead the user picked from a leads.find result. Pick the right outreach_action for the situation: 'comment_post' for a top-level reply on a thread, 'reply_comment' to respond to a specific comment (provide reply_to_author + reply_to_text), 'dm' or 'dm_post_author' for a DM, 'channel_about' for a YouTube About-tab cold intro, 'profile_check' for stale posts where you want a follow-up rather than a direct reply. Do NOT call outreach.draft for COMPETITOR-flagged leads (their matched_signals contains 'category:COMPETITOR') as outreach to a competitor's content is bad form. Do NOT use it to write generic copy unrelated to a specific post. Returns: { draft } as a single string ready to paste, no surrounding chrome.",
   {
     idea: z
       .string()

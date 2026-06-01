@@ -14,7 +14,7 @@
 [![MCP SDK](https://img.shields.io/badge/MCP_SDK-1.x-7C3AED?logo=anthropic&logoColor=white)](https://modelcontextprotocol.io)
 [![Built for Claude](https://img.shields.io/badge/Built_for-Claude-D97757?logo=anthropic&logoColor=white)](https://claude.ai)
 
-Model Context Protocol server for [Gorilla](https://usegorilla.app). Find your first 100 SaaS users by searching Reddit, X, YouTube, LinkedIn, and Bluesky for real demand signals. Every $5 run hits all five platforms.
+Model Context Protocol server for [Gorilla](https://usegorilla.app). Find your first 100 SaaS users by searching Reddit, X, YouTube, LinkedIn, and Bluesky for real demand signals. Start free with 100 credits. You spend one credit per qualified lead (hot or warm); low-relevance results are free.
 
 Learn more: [usegorilla.app](https://usegorilla.app) · [Real run examples](https://usegorilla.app/find-users/) · [How Gorilla compares](https://usegorilla.app/alternatives/) · [Blog](https://usegorilla.app/blog/)
 
@@ -41,7 +41,7 @@ GORILLA_API_KEY=grla_... node dist/index.js
 
 ### Get your API key
 
-1. Sign up at [usegorilla.app](https://usegorilla.app). $5 per run, no subscription.
+1. Sign up at [usegorilla.app](https://usegorilla.app). Free tier: 100 credits, no card.
 2. Sign in at [platform.usegorilla.app](https://platform.usegorilla.app).
 3. Menu, API Keys, Create.
 4. Copy the key (shown once).
@@ -88,7 +88,7 @@ Tools are namespaced by domain (`leads.*`, `idea.*`, `runs.*`, `outreach.*`, `ac
 
 ### `leads.find`
 
-Run the full pipeline. Searches Reddit, X, YouTube, LinkedIn, and Bluesky and returns scored leads. All five platforms hit on every $5 run. Takes 60-120 seconds. Costs 1 run credit.
+Run the full pipeline. Searches Reddit, X, YouTube, LinkedIn, and Bluesky and returns scored leads. Takes 60-120 seconds. One credit per qualified lead (hot or warm); low-relevance results are free. LinkedIn is a paid-plan source.
 
 **Parameters:** `idea` (required) — product description
 
@@ -108,7 +108,7 @@ Conversational refinement. Returns one clarifying question at a time to sharpen 
 
 ### `idea.expand`
 
-Generate keyword scaffolding (core keywords, adjacent niches, pain points, competitor names, exclusion terms) without running searches. Costs 1 run credit.
+Generate keyword scaffolding (core keywords, adjacent niches, pain points, competitor names, exclusion terms) without running searches. Free.
 
 **Parameters:** `idea` (required)
 
@@ -118,7 +118,7 @@ Generate keyword scaffolding (core keywords, adjacent niches, pain points, compe
 
 ### `leads.search`
 
-Search a single platform with custom queries. Bypasses theme expansion and AI scoring. Costs 1 run credit.
+Search a single platform with custom queries. Bypasses theme expansion and AI scoring. One credit per qualified lead; low-relevance results are free.
 
 **Parameters:**
 - `source` (required): `reddit`, `x`, `youtube`, `linkedin`, or `bluesky` (LinkedIn is Pro-only)
@@ -145,15 +145,15 @@ List your last 50 runs, newest first. Free.
 
 ### `account.billing`
 
-Check your plan, remaining weekly runs, and referral credits. Free.
+Check your plan and remaining credit balance. Free.
 
-**Returns:** Plan name, weekly usage, referral credits, total available runs.
+**Returns:** Plan name (`free` or `monthly`) and credit balance (tier + pack = total).
 
 ---
 
 ### `outreach.draft`
 
-Generate a platform-tuned outreach message for a specific lead. Costs 1 run credit per draft.
+Generate a platform-tuned outreach message for a specific lead. Free.
 
 **Parameters:** `idea`, `source`, `outreach_action`, `post_title`, `post_body` (required), plus optional `post_handle`, `language`, `reply_to_author`, `reply_to_text`.
 
@@ -199,8 +199,11 @@ Backend URL and gateway key are fetched automatically from `https://platform.use
 
 ## Pricing
 
-- **Single run:** $5 flat. Pay per use, no subscription. Hits all five platforms (Reddit, X, YouTube, LinkedIn, Bluesky).
+- **Free tier:** 100 credits, granted once, no card. A one-time trial.
+- **Paid plan:** $14.99/mo for 2,000 credits. Unused credits roll over.
+- **Metering:** one credit per qualified lead (hot or warm). Low-relevance results are free. Failed searches refund.
+- **Sources:** the free tier covers Reddit, X, YouTube, and Bluesky. The paid plan adds LinkedIn (all five).
 
-`leads.find`, `leads.search`, `idea.expand`, and `outreach.draft` each cost 1 run credit. `idea.refine`, `runs.get`, `runs.list`, `account.billing`, and `outreach.plan` are free.
+`leads.find` and `leads.search` spend credits only on the qualified leads they return. `idea.refine`, `idea.expand`, `runs.get`, `runs.list`, `account.billing`, `outreach.draft`, and `outreach.plan` are free.
 
 See [usegorilla.app](https://usegorilla.app) for the full product.

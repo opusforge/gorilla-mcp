@@ -42,9 +42,9 @@ This is what you pass to `find_leads`. Richer, more specific input → sharper s
 
 Call **`find_leads(idea: "<sharpened sentence>")`** once. Warn the user it takes 30 to 90 seconds.
 
-`find_leads` searches Reddit, X (Twitter), YouTube, TikTok, LinkedIn, and Threads in parallel. Gorilla is paid-only — every $5 run consumes one credit and covers all six platforms. No tier-gating.
+`find_leads` searches Reddit, X (Twitter), YouTube, LinkedIn, and Bluesky in parallel. The free tier covers Reddit, X, YouTube, and Bluesky; LinkedIn is a paid-plan source. You spend one credit per qualified lead (hot or warm); low-relevance results are free.
 
-Only fall back to **`search_source(source, queries)`** if `find_leads` returns nothing useful on a specific platform and you want to try different phrasing on that platform alone. Valid sources: `reddit`, `youtube`, `twitter`, `tiktok`, `linkedin`, `threads`. Never re-run `find_leads` for the same idea in one session. Use **`get_run(run_id)`** to re-analyze existing results.
+Only fall back to **`search_source(source, queries)`** if `find_leads` returns nothing useful on a specific platform and you want to try different phrasing on that platform alone. Valid sources: `reddit`, `youtube`, `twitter`, `linkedin`, `bluesky`. Never re-run `find_leads` for the same idea in one session. Use **`get_run(run_id)`** to re-analyze existing results.
 
 ## Step 4. Triage by score
 
@@ -99,10 +99,10 @@ Top 10 max per response. Offer to generate more on request.
 
 ## Billing awareness
 
-Gorilla is paid-only. Every run costs a credit. Before the first search, call **`billing_status`** and surface the state plainly:
+Searches spend one credit per qualified lead (hot or warm); low-relevance results are free. Before the first search, call **`billing_status`** and surface the state plainly:
 
-- **Trial user with credits left**: just proceed, mention how many remain.
-- **0 runs available**: stop and say "No runs available. Top up at https://usegorilla.app/#pricing to keep going."
+- **Free trial with credits left**: just proceed, mention how many remain.
+- **0 credits left**: stop and say "Out of credits. Upgrade at https://usegorilla.app to keep going. The plan is $14.99/mo for 2,000 credits."
 - **Active paid plan with credits**: just proceed.
 
 If a tool returns a billing error mid-flow, surface it with the upgrade URL. Don't swallow it.

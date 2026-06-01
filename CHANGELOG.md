@@ -54,7 +54,7 @@ All notable changes to the Gorilla MCP server are documented here.
 - Bumped TypeScript to 6.x and `@types/node` to 25.x. Build still passes; no source changes required.
 - Bumped `zod` to 4.x.
 - README install instructions switched from `npm install -g @gorilla/mcp` (not published) to `npx -y github:opusforge/gorilla-mcp` so the install path actually works today.
-- Pricing in README refreshed to current ($0.99 / $3.99 weekly / $149.99 lifetime).
+- Pricing copy in README refreshed to the then-current model.
 - `tsconfig.json` declares node types explicitly to survive container envs that confuse implicit type resolution.
 
 ### Fixed

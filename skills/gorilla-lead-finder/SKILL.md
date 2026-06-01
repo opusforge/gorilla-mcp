@@ -1,11 +1,11 @@
 ---
 name: gorilla-lead-finder
-description: Find your first SaaS users by searching Reddit, X, YouTube, TikTok, LinkedIn, and Threads for people already describing the problem your product solves. Ranks every result by buying intent and drafts platform-tuned outreach. Backed by the Gorilla API at https://usegorilla.app.
+description: Find your first SaaS users by searching Reddit, X, YouTube, LinkedIn, and Bluesky for people already describing the problem your product solves. Ranks every result by buying intent and drafts platform-tuned outreach. Backed by the Gorilla API at https://usegorilla.app.
 ---
 
 # Gorilla Lead Finder
 
-This skill helps solo founders find their first paying users by surfacing real social posts where people are actively describing the problem the founder's SaaS solves. The skill drives Gorilla's MCP server, which searches six platforms in parallel, scores every post by buying intent, and drafts outreach messages tuned to each platform's tone.
+This skill helps solo founders find their first paying users by surfacing real social posts where people are actively describing the problem the founder's SaaS solves. The skill drives Gorilla's MCP server, which searches five platforms in parallel, scores every post by buying intent, and drafts outreach messages tuned to each platform's tone.
 
 ## When to Use This Skill
 
@@ -18,10 +18,10 @@ This skill helps solo founders find their first paying users by surfacing real s
 ## What This Skill Does
 
 1. **Sharpens the idea**: Asks the founder five clarifying questions about their ICP, audience pain, and the alternatives users currently rely on.
-2. **Searches six platforms at once**: Pulls recent posts from Reddit, X, YouTube, TikTok, LinkedIn, and Threads where people describe the relevant problem.
+2. **Searches five platforms at once**: Pulls recent posts from Reddit, X, YouTube, LinkedIn, and Bluesky where people describe the relevant problem. LinkedIn is a paid-plan source; the free tier covers the other four.
 3. **Scores by buying intent**: Returns each lead with an intent score from 0 to 1. HIGH (≥0.7), MED (0.4 to 0.69), LOW (<0.4).
 4. **Buckets by category**: ACTIVE_SEARCH, PAIN_OR_FRUSTRATION, SWITCHING, COMPARISON, FEATURE_GAP, COMPETITOR, TUTORIAL, DISCUSSION. Each bucket gets a different outreach register.
-5. **Drafts platform-tuned outreach**: For each lead the founder picks, generates a Reddit-paragraph, X-reply, YouTube-comment, TikTok-DM, LinkedIn reply, or Threads reply that follows that platform's conventions.
+5. **Drafts platform-tuned outreach**: For each lead the founder picks, generates a Reddit-paragraph, X-reply, YouTube-comment, LinkedIn reply, or Bluesky reply that follows that platform's conventions.
 6. **Plans the funnel**: Returns a Week-1 outreach cadence (sends per day per channel, follow-up windows, action register per category bucket).
 
 ## How to Use
@@ -34,7 +34,7 @@ The skill calls the Gorilla MCP server. Install it once:
 npx -y @usegorilla/mcp
 ```
 
-Configure in Claude Code or Cursor. Sign up at https://usegorilla.app to get a `GORILLA_API_KEY`. Pricing: $5 per run, no subscription. All six platforms included on every run.
+Configure in Claude Code or Cursor. Sign up at https://usegorilla.app to get a `GORILLA_API_KEY`. Pricing: start free with 100 credits, no card. Paid plan is $14.99/mo for 2,000 credits with rollover. You spend one credit per qualified lead (hot or warm); low-relevance results are free.
 
 ### Basic Usage
 
@@ -103,7 +103,7 @@ Total Week 1 send target: 12 messages.
 ## Safety and Limits
 
 - Read-only against public social posts. No automated DMs are sent. The founder reviews and sends every message themselves.
-- Paid per-run (no free tier). Each `leads.find` call costs one credit.
+- Free to start (100 credits, no card). A `leads.find` run spends one credit per qualified lead it returns; low-relevance results are free.
 - Rate-limited at the API level. Do not loop the skill in a script.
 
 **Inspired by:** Real lead-discovery problem from solo SaaS founders who hate cold email. The full pipeline runs at https://usegorilla.app.
