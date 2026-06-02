@@ -2,10 +2,23 @@
 
 All notable changes to the Gorilla MCP server are documented here.
 
+## [3.0.0] - 2026-06-02
+
+### Breaking
+- Rebuilt against the V4 serverless backend. The tool surface is now **`search`**, **`get_search`**, and **`billing_status`**. The legacy `leads.find` / `leads.search` / `idea.refine` / `idea.expand` / `runs.get` / `runs.list` / `outreach.draft` / `outreach.plan` tools are removed — they targeted pre-V4 endpoints that no longer exist. `search` runs the full multi-source pipeline and polls `v2-search-stream`; `get_search` re-reads a search by id; `account.billing` is renamed `billing_status`. Idea refinement and outreach drafting are now done by the model directly (the bundled skills guide it), not by server tools.
+
+### Fixed
+- Removed the runtime `mcp-config.json` fetch — it returned the marketing site's SPA HTML and threw on every tool call. The package now talks directly to `https://platform.usegorilla.app/v1` with your `x-api-key` header; the gateway injects the rest. Override with `GORILLA_API_BASE` for self-hosted deployments.
+- `billing_status` reads the current `{ plan, balance }` shape (it was reading dropped `runs_this_week` / `weekly_limit` fields and printing NaN).
+
+### Changed
+- Pricing copy: 100 free credits once, then $14.99/mo for 2,000 (one credit per qualified lead; low-relevance results free). LinkedIn is a paid-plan source. Five sources: Reddit, X, YouTube, LinkedIn, Bluesky.
+- Dropped the `GORILLA_DEFAULT_LANGUAGE` and `GORILLA_CONFIG_URL` env vars.
+
 ## [2.0.1] - 2026-05-10
 
 ### Changed
-- Default `CONFIG_URL` now points at `https://platform.usegorilla.app/mcp-config.json`. The legacy `gorilla.opusforge.com.br` host still serves the same payload, so no action is required for existing installs — the next `npm i -g @gorilla/mcp` upgrade will pick up the new default. Docs and the missing-key error message updated to match.
+- Default `CONFIG_URL` now points at `https://platform.usegorilla.app/mcp-config.json`. The legacy `gorilla.opusforge.com.br` host still serves the same payload, so no action is required for existing installs — the next `npm i -g @usegorilla/mcp` upgrade will pick up the new default. Docs and the missing-key error message updated to match.
 
 ## [2.0.0] - 2026-04-29
 

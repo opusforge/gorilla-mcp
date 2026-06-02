@@ -2,9 +2,9 @@
   "manifest_version": "0.3",
   "name": "gorilla-mcp",
   "display_name": "Gorilla",
-  "version": "2.0.2",
+  "version": "3.0.0",
   "description": "Find your first 100 SaaS users by searching Reddit, X, YouTube, LinkedIn, and Bluesky for real demand signals.",
-  "long_description": "Model Context Protocol server for [Gorilla](https://usegorilla.app). Paste an app idea and Gorilla returns scored leads from real posts across Reddit, X, YouTube, LinkedIn, and Bluesky where people are actively expressing demand.\n\n## Tools\n\n- `leads.find` — full pipeline, returns scored leads in 60-120s\n- `idea.refine` — conversational refinement before searching\n- `idea.expand` — generate keywords, pain points, competitors\n- `leads.search` — search a single platform with custom queries\n- `runs.get` / `runs.list` — fetch results, list past runs\n- `account.billing` — check plan and credit balance\n- `outreach.draft` — platform-tuned reply for a specific lead\n- `outreach.plan` — Week-1 outreach plan from HIGH-intent leads\n\n## Pricing\n\nStart free: 100 credits, no card. Paid plan is $14.99/mo for 2,000 credits with rollover. You spend one credit per qualified lead (hot or warm); low-relevance results are free. LinkedIn is a paid-plan source; the free tier covers Reddit, X, YouTube, and Bluesky.\n\nGet your API key at [usegorilla.app](https://usegorilla.app).",
+  "long_description": "Model Context Protocol server for [Gorilla](https://usegorilla.app). Paste an idea and Gorilla returns scored leads from real posts across Reddit, X, YouTube, LinkedIn, and Bluesky where people are actively expressing demand.\n\n## Tools\n\n- `search` — search every source in parallel, returns scored Hot / Warm / Cold results in 30-90s\n- `get_search` — fetch results for a search by its search_id (recovery / re-read)\n- `billing_status` — check plan and credit balance\n\n## Pricing\n\nStart free: 100 credits, no card. Paid plan is $14.99/mo for 2,000 credits with rollover. You spend one credit per qualified lead (hot or warm); low-relevance results are free. LinkedIn is a paid-plan source; the free tier covers Reddit, X, YouTube, and Bluesky.\n\nGet your API key at [usegorilla.app](https://usegorilla.app).",
   "author": {
     "name": "OpusForge",
     "email": "gorilla@opusforge.com.br",
@@ -34,140 +34,103 @@
     "entry_point": "dist/index.js",
     "mcp_config": {
       "command": "node",
-      "args": ["${__dirname}/dist/index.js"],
+      "args": [
+        "${__dirname}/dist/index.js"
+      ],
       "env": {
-        "GORILLA_API_KEY": "${user_config.api_key}",
-        "GORILLA_DEFAULT_LANGUAGE": "${user_config.default_language}",
-        "GORILLA_CONFIG_URL": "${user_config.config_url}"
+        "GORILLA_API_KEY": "${user_config.api_key}"
       }
     }
   },
   "tools": [
     {
-      "name": "leads.find",
-      "description": "Run the full pipeline. Searches Reddit, X, YouTube, LinkedIn, and Bluesky for posts where people express demand for the given idea. Takes 60-120 seconds. One credit per qualified lead (hot or warm); low-relevance results are free. LinkedIn is a paid-plan source.",
-      "annotations": { "title": "Find leads", "readOnlyHint": false, "destructiveHint": false, "idempotentHint": false, "openWorldHint": true },
+      "name": "search",
+      "description": "Search Reddit, X, YouTube, LinkedIn, and Bluesky in parallel for posts where people express demand for what you describe. Returns results ranked Hot / Warm / Cold by buying intent. One credit per qualified lead (Hot or Warm); Cold results are free; a failed search is refunded. LinkedIn is a paid-plan source; the free tier covers Reddit, X, YouTube, and Bluesky. Takes 30-90s.",
+      "annotations": {
+        "title": "Search demand",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      },
       "inputSchema": {
         "type": "object",
         "properties": {
-          "idea": { "type": "string", "description": "The app idea or product description to find leads for" }
-        },
-        "required": ["idea"]
-      }
-    },
-    {
-      "name": "idea.refine",
-      "description": "Conversational refinement. Returns one clarifying question at a time to sharpen the product description before searching. Free.",
-      "annotations": { "title": "Refine idea", "readOnlyHint": true, "destructiveHint": false, "idempotentHint": false, "openWorldHint": true },
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "idea": { "type": "string", "description": "The original raw idea text. Stays the same across turns." },
-          "current_refined_idea": { "type": "string", "description": "The latest refined_idea returned by a previous idea.refine call." },
-          "history": {
-            "type": "array",
-            "description": "Prior turns: each entry is the question the server asked and the user's answer.",
-            "items": {
-              "type": "object",
-              "properties": {
-                "question": { "type": "string" },
-                "answer": { "type": "string" }
-              },
-              "required": ["question", "answer"]
-            }
+          "query": {
+            "type": "string",
+            "description": "What to search for, in your own words. The backend expands it into per-platform intent phrasings."
           },
-          "language": { "type": "string", "enum": ["en", "pt", "all"], "description": "Output language. 'all' (default) auto-detects from the idea text." },
-          "turn": { "type": "integer", "description": "1-based turn number." },
-          "max_turns": { "type": "integer", "description": "Maximum rounds before status is forced to 'ready'. Default 5." }
+          "source": {
+            "type": "string",
+            "enum": [
+              "reddit",
+              "twitter",
+              "bluesky",
+              "linkedin",
+              "youtube",
+              "all"
+            ],
+            "description": "Which platform to search, or 'all' (default) for every supported source in parallel."
+          },
+          "since": {
+            "type": "string",
+            "description": "Time range: '24h' | '7d' | '30d' | 'all', or an ISO date. Default 7d."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Max results, 1-200. Default 50."
+          }
         },
-        "required": ["idea"]
+        "required": [
+          "query"
+        ]
       }
     },
     {
-      "name": "idea.expand",
-      "description": "Generate keyword scaffolding for an idea (core keywords, adjacent niches, pain points, competitor names, exclusion terms). Free; returns no leads, so no credits are spent.",
-      "annotations": { "title": "Expand themes", "readOnlyHint": true, "destructiveHint": false, "idempotentHint": false, "openWorldHint": true },
+      "name": "get_search",
+      "description": "Fetch the current state and results for a search by its search_id. Use it to recover a search that timed out client-side, or to re-read a recent one. Free.",
+      "annotations": {
+        "title": "Get search",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
       "inputSchema": {
         "type": "object",
         "properties": {
-          "idea": { "type": "string", "description": "The app idea to expand into search themes" }
+          "search_id": {
+            "type": "string",
+            "description": "The search_id returned by a prior search call."
+          }
         },
-        "required": ["idea"]
+        "required": [
+          "search_id"
+        ]
       }
     },
     {
-      "name": "leads.search",
-      "description": "Search a single platform (reddit, x, youtube, linkedin, or bluesky) with custom queries. Bypasses theme expansion and AI scoring. One credit per qualified lead; low-relevance results are free. LinkedIn is a paid-plan source.",
-      "annotations": { "title": "Search a single source", "readOnlyHint": false, "destructiveHint": false, "idempotentHint": false, "openWorldHint": true },
+      "name": "billing_status",
+      "description": "Check your plan and credit balance. Free.",
+      "annotations": {
+        "title": "Billing status",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
       "inputSchema": {
         "type": "object",
-        "properties": {
-          "source": { "type": "string", "enum": ["reddit", "x", "twitter", "youtube", "linkedin", "bluesky"], "description": "Which platform to search." },
-          "queries": { "type": "array", "items": { "type": "string" }, "description": "Search queries to run on the platform" },
-          "run_id": { "type": "string", "description": "Optional run ID to attach results to an existing run" }
-        },
-        "required": ["source", "queries"]
-      }
-    },
-    {
-      "name": "runs.get",
-      "description": "Fetch the full result for a previously-started run by its run_id. Free.",
-      "annotations": { "title": "Get run", "readOnlyHint": true, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false },
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "run_id": { "type": "string", "description": "The run ID returned by leads.find (e.g. 'run_abc123')." }
-        },
-        "required": ["run_id"]
-      }
-    },
-    {
-      "name": "runs.list",
-      "description": "List the user's recent lead-generation runs, newest first, capped at 50. Free.",
-      "annotations": { "title": "List runs", "readOnlyHint": true, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false },
-      "inputSchema": { "type": "object", "properties": {} }
-    },
-    {
-      "name": "account.billing",
-      "description": "Check the user's plan and remaining credit balance. Free.",
-      "annotations": { "title": "Billing status", "readOnlyHint": true, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false },
-      "inputSchema": { "type": "object", "properties": {} }
-    },
-    {
-      "name": "outreach.draft",
-      "description": "Generate a platform-tuned outreach message for a specific lead. Free; no credits are spent.",
-      "annotations": { "title": "Draft outreach", "readOnlyHint": true, "destructiveHint": false, "idempotentHint": false, "openWorldHint": true },
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "idea": { "type": "string", "description": "The refined product idea (used as the writer's voice)" },
-          "source": { "type": "string", "enum": ["reddit", "x", "twitter", "youtube", "linkedin", "bluesky"], "description": "Which platform the lead is on" },
-          "outreach_action": { "type": "string", "enum": ["reply_comment", "comment_post", "reply", "comment", "dm", "dm_post_author", "channel_about", "profile_check"], "description": "How to engage." },
-          "post_title": { "type": "string", "description": "Title of the lead post" },
-          "post_body": { "type": "string", "description": "Body / snippet of the lead post" },
-          "post_handle": { "type": "string", "description": "OP handle (e.g. 'u/founder', '@user'). Optional but improves drafts." },
-          "language": { "type": "string", "enum": ["en", "pt"], "description": "Output language. Defaults to 'en'." },
-          "reply_to_author": { "type": "string", "description": "For reply_comment: the author of the comment being replied to." },
-          "reply_to_text": { "type": "string", "description": "For reply_comment: the comment text being replied to." }
-        },
-        "required": ["idea", "source", "outreach_action", "post_title", "post_body"]
-      }
-    },
-    {
-      "name": "outreach.plan",
-      "description": "Build a Week-1 outreach plan from a completed run's HIGH-intent leads, with per-channel send cadence and per-category action register. Free.",
-      "annotations": { "title": "Plan acquisition funnel", "readOnlyHint": true, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false },
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "run_id": { "type": "string", "description": "The run_id returned by leads.find" }
-        },
-        "required": ["run_id"]
+        "properties": {}
       }
     }
   ],
   "compatibility": {
-    "platforms": ["darwin", "win32", "linux"],
+    "platforms": [
+      "darwin",
+      "win32",
+      "linux"
+    ],
     "runtimes": {
       "node": ">=22.0.0"
     }
@@ -178,20 +141,6 @@
       "title": "Gorilla API Key",
       "description": "Your API key from platform.usegorilla.app (Menu → API Keys → Create). Starts with grla_. The server starts without it so you can browse tools, but every tool call requires a key.",
       "sensitive": true,
-      "required": false
-    },
-    "default_language": {
-      "type": "string",
-      "title": "Default language",
-      "description": "Fallback language for idea.refine and outreach.draft when the caller doesn't specify one. Accepts en, pt, or all.",
-      "default": "en",
-      "required": false
-    },
-    "config_url": {
-      "type": "string",
-      "title": "Custom config URL (advanced)",
-      "description": "Override the runtime config endpoint. Leave blank for the default. Useful for staging or self-hosted deployments.",
-      "default": "",
       "required": false
     }
   }

@@ -52,7 +52,7 @@ The skill will refine the idea, run the search, and return ranked leads.
 3. Draft outreach for the top 5 HIGH-intent leads.
 ```
 
-The skill calls `leads.find`, then `outreach.plan`, then `outreach.draft` per lead. Output is a ready-to-send shortlist.
+The skill calls `search`, then YOU draft the acquisition plan and per-lead outreach from the returned leads — the model writes these directly, there is no separate tool. Output is a ready-to-send shortlist.
 
 ## Example
 
@@ -103,7 +103,7 @@ Total Week 1 send target: 12 messages.
 ## Safety and Limits
 
 - Read-only against public social posts. No automated DMs are sent. The founder reviews and sends every message themselves.
-- Free to start (100 credits, no card). A `leads.find` run spends one credit per qualified lead it returns; low-relevance results are free.
+- Free to start (100 credits, no card). A `search` run spends one credit per qualified lead it returns; low-relevance results are free.
 - Rate-limited at the API level. Do not loop the skill in a script.
 
 **Inspired by:** Real lead-discovery problem from solo SaaS founders who hate cold email. The full pipeline runs at https://usegorilla.app.

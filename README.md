@@ -84,103 +84,44 @@ Add to `.cursor/mcp.json`:
 
 ## Tools
 
-Tools are namespaced by domain (`leads.*`, `idea.*`, `runs.*`, `outreach.*`, `account.*`).
+### `search`
 
-### `leads.find`
-
-Run the full pipeline. Searches Reddit, X, YouTube, LinkedIn, and Bluesky and returns scored leads. Takes 60-120 seconds. One credit per qualified lead (hot or warm); low-relevance results are free. LinkedIn is a paid-plan source.
-
-**Parameters:** `idea` (required) — product description
-
-**Returns:** Scored leads with source, channel, title, URL, lead_score (0-1), and outreach hints.
-
----
-
-### `idea.refine`
-
-Conversational refinement. Returns one clarifying question at a time to sharpen the idea before searching. Free.
-
-**Parameters:** `idea` (required), plus `current_refined_idea`, `history`, `language`, `turn`, `max_turns` (all optional)
-
-**Returns:** Status, refined_idea, readiness_score, and the next question (or null when ready).
-
----
-
-### `idea.expand`
-
-Generate keyword scaffolding (core keywords, adjacent niches, pain points, competitor names, exclusion terms) without running searches. Free.
-
-**Parameters:** `idea` (required)
-
-**Returns:** Structured themes for targeted searches.
-
----
-
-### `leads.search`
-
-Search a single platform with custom queries. Bypasses theme expansion and AI scoring. One credit per qualified lead; low-relevance results are free.
+Search Reddit, X, YouTube, LinkedIn, and Bluesky in parallel for posts where people express demand for what you describe. Returns results ranked Hot / Warm / Cold by buying intent. Takes 30-90 seconds. One credit per qualified lead (Hot or Warm); Cold results are free, and a failed search is refunded. LinkedIn is a paid-plan source; the free tier covers Reddit, X, YouTube, and Bluesky.
 
 **Parameters:**
-- `source` (required): `reddit`, `x`, `youtube`, `linkedin`, or `bluesky` (LinkedIn is Pro-only)
-- `queries` (required): Array of search queries
-- `run_id` (optional): Attach results to an existing run
+- `query` (required) - what to search for, in your own words
+- `source` (optional) - `reddit`, `twitter`, `youtube`, `linkedin`, `bluesky`, or `all` (default)
+- `since` (optional) - `24h` | `7d` | `30d` | `all`, or an ISO date. Default `7d`.
+- `limit` (optional) - max results, 1-200. Default 50.
 
-**Returns:** Raw leads from the specified platform.
-
----
-
-### `runs.get`
-
-Fetch results for a previously-started run. Free.
-
-**Parameters:** `run_id` (required)
+**Returns:** A `search_id` plus scored results (source, channel, title, URL, score, Hot/Warm/Cold) and the credits charged.
 
 ---
 
-### `runs.list`
+### `get_search`
 
-List your last 50 runs, newest first. Free.
+Fetch the current state and results for a search by its `search_id`. Use it to recover a search that timed out client-side, or to re-read a recent one. Free.
+
+**Parameters:** `search_id` (required)
 
 ---
 
-### `account.billing`
+### `billing_status`
 
 Check your plan and remaining credit balance. Free.
 
-**Returns:** Plan name (`free` or `monthly`) and credit balance (tier + pack = total).
-
----
-
-### `outreach.draft`
-
-Generate a platform-tuned outreach message for a specific lead. Free.
-
-**Parameters:** `idea`, `source`, `outreach_action`, `post_title`, `post_body` (required), plus optional `post_handle`, `language`, `reply_to_author`, `reply_to_text`.
-
-**Returns:** A ready-to-paste draft.
-
----
-
-### `outreach.plan`
-
-Build a Week-1 outreach plan from a completed run's HIGH-intent leads, with per-channel send cadence. Free.
-
-**Parameters:** `run_id` (required)
+**Returns:** Plan (`free` or `monthly`) and credit balance (tier + pack = total).
 
 ## Example workflow
 
 ```
-1. idea.refine("a language learning app for travelers")
-   → "Who's the target user? Daily commuters or tourists?"
+1. search("a language learning app for travelers")
+   -> search_id + scored leads across Reddit, X, YouTube, LinkedIn, Bluesky,
+      ranked Hot / Warm / Cold by buying intent. One credit per Hot/Warm lead.
 
-2. leads.find(refined_idea)
-   → 47 leads across Reddit, X, YouTube, LinkedIn, and Bluesky
-   → 12 high-intent (people actively searching for this)
+2. get_search(search_id)   -> re-read or recover results without searching again
 
-3. outreach.plan(run_id)
-   → Week-1 plan: 3/day on Reddit, 4/day on X, 3/day on Bluesky, 2/day on YouTube/LinkedIn
-
-4. outreach.draft(...)  → ready-to-send reply for each high-intent lead
+3. billing_status()        -> plan + credits remaining
 ```
 
 ### Install via Smithery
@@ -191,11 +132,10 @@ Available at [smithery.ai/server/opusforge/gorilla-mcp](https://smithery.ai/serv
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `GORILLA_API_KEY` | Yes | Your API key (starts with `grla_`) |
-| `GORILLA_DEFAULT_LANGUAGE` | No | Fallback language for `idea.refine` and `outreach.draft` (`en`, `pt`, `all`). Default: `en`. |
-| `GORILLA_CONFIG_URL` | No | Override the runtime config endpoint. Useful for staging or self-hosted deployments. |
+| `GORILLA_API_KEY` | Yes | Your API key (starts with `grla_`). Create one at platform.usegorilla.app, Menu → API Keys. |
+| `GORILLA_API_BASE` | No | Override the API base. Default `https://platform.usegorilla.app/v1`. Useful for self-hosted deployments. |
 
-Backend URL and gateway key are fetched automatically from `https://platform.usegorilla.app/mcp-config.json` on startup. No other configuration required.
+No other configuration is required — the package talks to the public API with your key.
 
 ## Pricing
 
@@ -204,6 +144,6 @@ Backend URL and gateway key are fetched automatically from `https://platform.use
 - **Metering:** one credit per qualified lead (hot or warm). Low-relevance results are free. Failed searches refund.
 - **Sources:** the free tier covers Reddit, X, YouTube, and Bluesky. The paid plan adds LinkedIn (all five).
 
-`leads.find` and `leads.search` spend credits only on the qualified leads they return. `idea.refine`, `idea.expand`, `runs.get`, `runs.list`, `account.billing`, `outreach.draft`, and `outreach.plan` are free.
+`search` spends one credit per qualified lead it returns; Cold results are free. `get_search` and `billing_status` are free.
 
 See [usegorilla.app](https://usegorilla.app) for the full product.

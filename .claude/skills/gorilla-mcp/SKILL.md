@@ -13,7 +13,7 @@ Marketing site: https://usegorilla.app · API + dashboard: https://gorilla.opusf
 
 1. **Pin the ICP**. Who specifically, on which platforms, would pay in the next 30 days?
 2. **Sharpen the idea**. Compress to one sentence: audience + pain + alternative.
-3. **`find_leads`** once, all platforms.
+3. **`search`** once, all platforms.
 4. **Triage HIGH first** (`lead_score ≥ 0.7`). MED only if HIGH is thin.
 5. **Bucket by `matched_signals` category**. Each category demands a different opener.
 6. **Draft a unique 2-sentence opener per lead** that quotes their post.
@@ -28,7 +28,7 @@ If the user gives you a vague idea, don't search yet. Ask, in one message:
 - What do they currently use and hate?
 - Who would they switch from?
 
-If the user is stuck, use **`refine_idea(idea)`** to generate the five clarifying questions and present them as a picker. Their answers go into step 2. Don't skip this.
+If the user is stuck, generate five sharp clarifying questions yourself (target user, the pain, the platforms they live on, what they'd pay, the trigger) and present them as a picker. Their answers go into step 2. Don't skip this.
 
 ## Step 2. Sharpen the idea
 
@@ -36,15 +36,15 @@ Compose one or two sentences shaped like:
 
 > "A **[role]** at **[stage/context]** who struggles with **[specific pain]** and currently uses **[alternative they'd switch from]**."
 
-This is what you pass to `find_leads`. Richer, more specific input → sharper scoring. A one-word idea ("a CRM") returns noise.
+This is what you pass to `search`. Richer, more specific input → sharper scoring. A one-word idea ("a CRM") returns noise.
 
 ## Step 3. Run the search
 
-Call **`find_leads(idea: "<sharpened sentence>")`** once. Warn the user it takes 30 to 90 seconds.
+Call **`search(query: "<sharpened sentence>")`** once. Warn the user it takes 30 to 90 seconds.
 
-`find_leads` searches Reddit, X (Twitter), YouTube, LinkedIn, and Bluesky in parallel. The free tier covers Reddit, X, YouTube, and Bluesky; LinkedIn is a paid-plan source. You spend one credit per qualified lead (hot or warm); low-relevance results are free.
+`search` covers Reddit, X (Twitter), YouTube, LinkedIn, and Bluesky in parallel. The free tier covers Reddit, X, YouTube, and Bluesky; LinkedIn is a paid-plan source. You spend one credit per qualified lead (hot or warm); low-relevance results are free.
 
-Only fall back to **`search_source(source, queries)`** if `find_leads` returns nothing useful on a specific platform and you want to try different phrasing on that platform alone. Valid sources: `reddit`, `youtube`, `twitter`, `linkedin`, `bluesky`. Never re-run `find_leads` for the same idea in one session. Use **`get_run(run_id)`** to re-analyze existing results.
+To probe one platform with different phrasing, call **`search(query, source)`** with a specific `source` (`reddit`, `twitter`, `youtube`, `linkedin`, `bluesky`). Avoid re-running the same `search` in one session. Use **`get_search(search_id)`** to re-read existing results.
 
 ## Step 4. Triage by score
 
@@ -109,9 +109,9 @@ If a tool returns a billing error mid-flow, surface it with the upgrade URL. Don
 
 ## After the run: plan the funnel
 
-Once HIGH leads exist, call **`plan_acquisition_funnel(run_id)`** to get the per-channel volume and cadence breakdown. Use it to anchor the outreach plan you hand the user (X messages/week per channel, follow-up windows, when to revisit weak channels).
+Once HIGH leads exist, build the per-channel volume and cadence plan yourself: group the HIGH leads by source, set a sane daily send cap per channel, and define follow-up windows and when to revisit weak channels. Hand the user that plan (X messages/week per channel).
 
-For each lead the user wants to act on, call **`draft_outreach`** to get a platform-tuned draft. Don't write outreach by hand when the server-side drafter exists. Hand-edit only the parts the drafter can't know (the user's own credibility line, link to their product page, etc.).
+For each lead the user wants to act on, write the platform-tuned draft yourself from the lead's title/body and the channel's norms. Keep it short, specific, and non-spammy — reference what they actually said. Leave placeholders for the parts only the user knows (their credibility line, link to their product page).
 
 ## First-message pattern
 
