@@ -1,6 +1,6 @@
 {
   "name": "@usegorilla/mcp",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "MCP server for Gorilla. Find your first SaaS users on Reddit, X, YouTube, LinkedIn, and Bluesky. https://usegorilla.app",
   "private": false,
   "type": "module",
@@ -50,6 +50,6 @@
     "typescript": "^6.0.0"
   },
   "engines": {
-    "node": "22.x"
+    "node": ">=20"
   }
 }

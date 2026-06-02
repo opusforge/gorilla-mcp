@@ -2,6 +2,11 @@
 
 All notable changes to the Gorilla MCP server are documented here.
 
+## [3.0.1] - 2026-06-02
+
+### Fixed
+- Widened `engines.node` from `22.x` to `>=20` so Node 20 LTS (and 24/25) installs don't emit an EBADENGINE warning. No code change.
+
 ## [3.0.0] - 2026-06-02
 
 ### Breaking

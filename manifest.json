@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "gorilla-mcp",
   "display_name": "Gorilla",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Find your first 100 SaaS users by searching Reddit, X, YouTube, LinkedIn, and Bluesky for real demand signals.",
   "long_description": "Model Context Protocol server for [Gorilla](https://usegorilla.app). Paste an idea and Gorilla returns scored leads from real posts across Reddit, X, YouTube, LinkedIn, and Bluesky where people are actively expressing demand.\n\n## Tools\n\n- `search` — search every source in parallel, returns scored Hot / Warm / Cold results in 30-90s\n- `get_search` — fetch results for a search by its search_id (recovery / re-read)\n- `billing_status` — check plan and credit balance\n\n## Pricing\n\nStart free: 100 credits, no card. Paid plan is $14.99/mo for 2,000 credits with rollover. You spend one credit per qualified lead (hot or warm); low-relevance results are free. LinkedIn is a paid-plan source; the free tier covers Reddit, X, YouTube, and Bluesky.\n\nGet your API key at [usegorilla.app](https://usegorilla.app).",
   "author": {
@@ -132,7 +132,7 @@
       "linux"
     ],
     "runtimes": {
-      "node": ">=22.0.0"
+      "node": ">=20.0.0"
     }
   },
   "user_config": {
