@@ -133,7 +133,7 @@ Available at [smithery.ai/server/opusforge/gorilla-mcp](https://smithery.ai/serv
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `GORILLA_API_KEY` | Yes | Your API key (starts with `grla_`). Create one at platform.usegorilla.app, Menu → API Keys. |
-| `GORILLA_API_BASE` | No | Override the API base. Default `https://platform.usegorilla.app/v1`. Useful for self-hosted deployments. |
+| `GORILLA_API_BASE` | No | Override the API base. Default `https://usegorilla.app/v1`. Useful for self-hosted deployments. |
 
 No other configuration is required — the package talks to the public API with your key.
 

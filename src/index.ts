@@ -24,14 +24,20 @@ if (argv.includes("--version") || argv.includes("-v")) {
 
 const GORILLA_API_KEY = process.env.GORILLA_API_KEY ?? "";
 
-// The MCP only needs the user's GORILLA_API_KEY. The /v1 proxy at
-// platform.usegorilla.app injects the Supabase apikey server-side and
-// forwards x-api-key on to the Edge Functions, so the package never
-// fetches a remote config and never sends an apikey of its own.
+// The MCP only needs the user's GORILLA_API_KEY. The /v1 proxy at the apex
+// host usegorilla.app injects the Supabase apikey server-side and forwards
+// x-api-key on to the Edge Functions, so the package never fetches a remote
+// config and never sends an apikey of its own.
+//
+// The base must be the apex. The /v1 proxy is a Cloudflare Pages Function of
+// the gorilla-page project and is only deployed there; platform.usegorilla.app
+// serves the agent UI and has no /v1 route — it answers unmatched paths with
+// SPA HTML, which is why a wrong base surfaces as a JSON parse error. The
+// content-type guard in call() turns that into a legible message.
 //
 // GORILLA_API_BASE lets power users point at a different deployment
 // (staging, self-hosted proxy). Default is the public /v1 proxy.
-const API_BASE = (process.env.GORILLA_API_BASE ?? "https://platform.usegorilla.app/v1").replace(/\/$/, "");
+const API_BASE = (process.env.GORILLA_API_BASE ?? "https://usegorilla.app/v1").replace(/\/$/, "");
 
 // Streaming poll cadence. The backend hints suggested_interval_ms (~1500ms);
 // we cap the total wait at 5 minutes for the agent-facing search tool.
@@ -58,6 +64,19 @@ async function call<T>(
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     throw new Error(`${method} /${endpoint} failed (${res.status}): ${text}`);
+  }
+
+  // A 200 is not proof we reached the API. A base pointing at a host that
+  // serves a SPA returns 200 + index.html for the unmatched /v1 path, and
+  // res.json() then throws an opaque "Unexpected token '<'". Name the cause.
+  const ctype = res.headers.get("content-type") ?? "";
+  if (!ctype.includes("json")) {
+    const preview = (await res.text().catch(() => "")).slice(0, 120).replace(/\s+/g, " ").trim();
+    throw new Error(
+      `${method} /${endpoint} returned ${res.status} ${ctype || "(no content-type)"}, not JSON. ` +
+        `API base is ${API_BASE} — check it points at the API host, not a web UI. ` +
+        `Body starts: ${preview}`
+    );
   }
 
   return res.json() as Promise<T>;

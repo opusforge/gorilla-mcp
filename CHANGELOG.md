@@ -2,6 +2,14 @@
 
 All notable changes to the Gorilla MCP server are documented here.
 
+## [3.0.2] - 2026-07-16
+
+### Fixed
+- Pointed the default API base at the apex host `https://usegorilla.app/v1`. It was `https://platform.usegorilla.app/v1`, where the `/v1` proxy does not exist — that Cloudflare Pages Function is only deployed on the apex, while the `platform` subdomain serves the agent UI. Being a SPA, it answered every `/v1` call with `200` + `index.html`, so **every tool call in 3.0.0 and 3.0.1 failed** with `Unexpected token '<'`. Installs that pin `GORILLA_API_BASE` to a working base were unaffected.
+
+### Changed
+- `call()` now checks the response content-type before parsing. A non-JSON `200` (a SPA catch-all, a captive portal, a proxy error page) reports the base URL it actually reached instead of surfacing a JSON parse error.
+
 ## [3.0.1] - 2026-06-02
 
 ### Fixed
